@@ -1,0 +1,35 @@
+apiVersion: meta.pkg.crossplane.io/v1alpha1
+kind: Configuration
+metadata:
+  name: configuration-aws-elemental
+  annotations:
+    meta.crossplane.io/maintainer: Livewyer <bowen@livewyer.com>
+    meta.crossplane.io/source: github.com/livewyer-ops/crossplane-configuration-aws-elemental
+    meta.crossplane.io/license: MIT License
+    meta.crossplane.io/description: Crossplane Composite Resource Definitions (XRDs) package for AWS Elemental media services on Kubernetes
+spec:
+  crossplane:
+    version: ">=v1.20.0"
+  dependsOn:
+    - provider: xpkg.upbound.io/upbound/provider-family-aws
+      version: ">=v1"
+    - provider: xpkg.upbound.io/upbound/provider-aws-cloudcontrol
+      version: ">=v1"
+    - provider: xpkg.upbound.io/upbound/provider-aws-medialive
+      version: ">=v1"
+    - provider: xpkg.upbound.io/upbound/provider-aws-mediapackage
+      version: ">=v1"
+    - provider: xpkg.upbound.io/upbound/provider-aws-mediastore
+      version: ">=v1"
+    - provider: xpkg.upbound.io/upbound/provider-aws-cloudformation
+      version: ">=v1"
+    - function: xpkg.upbound.io/upbound/function-patch-and-transform
+      version: ">=v0.9.0"
+    - function: xpkg.upbound.io/upbound/function-go-templating
+      version: ">=v0.10.0"
+    - function: xpkg.upbound.io/upbound/function-auto-ready
+      version: ">=v0.5.0"
+    - function: xpkg.upbound.io/crossplane-contrib/function-status-transformer
+      version: ">=v0.4.1"
+    - function: xpkg.upbound.io/crossplane-contrib/function-sequencer
+      version: ">=v0.2.3"
