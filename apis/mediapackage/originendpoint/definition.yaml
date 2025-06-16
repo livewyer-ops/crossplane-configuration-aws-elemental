@@ -1,0 +1,463 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: CompositeResourceDefinition
+metadata:
+  name: xoriginendpoint.mediapackage.aws.livewyer.io
+spec:
+  group: mediapackage.aws.livewyer.io
+  names:
+    kind: XOriginEndpoint
+    plural: xoriginendpoints
+  claimNames:
+    kind: OriginEndpoint
+    plural: originendpoints
+  versions:
+    - name: v1alpha1
+      served: true
+      referenceable: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              properties:
+                parameters:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      description: "A unique identifier for the OriginEndpoint."
+                    channelId:
+                      type: string
+                      description: "The ID of the Channel the OriginEndpoint is associated with."
+                    description:
+                      type: string
+                      description: "A short text description of the OriginEndpoint."
+                    manifestName:
+                      type: string
+                      description: "A short string appended to the end of the OriginEndpoint URL."
+                    origination:
+                      type: string
+                      description: "Control whether the OriginEndpoint is used for just-in-time packaging or not."
+                      enum:
+                        - "ALLOW"
+                        - "DENY"
+                    startoverWindowSeconds:
+                      type: integer
+                      description: "Maximum duration (seconds) of content to retain for startover playback."
+                      minimum: 0
+                    timeDelaySeconds:
+                      type: integer
+                      description: "Amount of delay (seconds) to enforce on the playback of live content."
+                      minimum: 0
+                    whitelist:
+                      type: array
+                      description: "A list of source IP addresses or CIDR blocks that will be allowed to access the OriginEndpoint."
+                      items:
+                        type: string
+                        pattern: "^([0-9]{1,3}\\.){3}[0-9]{1,3}(/([0-9]|[1-2][0-9]|3[0-2]))?$"
+                    authorization:
+                      type: object
+                      description: "Parameters for CDN authorization."
+                      properties:
+                        cdnIdentifierSecret:
+                          type: string
+                          description: "The Amazon Resource Name (ARN) for the secret in Secrets Manager that your Content Delivery Network (CDN) uses for authorization to access your endpoint."
+                        secretsRoleArn:
+                          type: string
+                          description: "The Amazon Resource Name (ARN) for the IAM role that allows MediaPackage to communicate with AWS Secrets Manager."
+                      required:
+                        - cdnIdentifierSecret
+                        - secretsRoleArn
+                      additionalProperties: false
+                    cmafPackage:
+                      type: object
+                      description: "A Common Media Application Format (CMAF) packaging configuration."
+                      properties:
+                        encryption:
+                          type: object
+                          description: "A Common Media Application Format (CMAF) encryption configuration."
+                          properties:
+                            keyRotationIntervalSeconds:
+                              type: integer
+                              description: "Time (in seconds) between each encryption key rotation."
+                              minimum: 1
+                            spekeKeyProvider:
+                              type: object
+                              description: "A configuration for accessing an external Secure Packager and Encoder Key Exchange (SPEKE) service that will provide encryption keys."
+                              additionalProperties: true
+                          additionalProperties: false
+                        hlsManifests:
+                          type: array
+                          description: "A list of HLS manifest configurations."
+                          items:
+                            type: object
+                            properties:
+                              id:
+                                type: string
+                                description: "The ID of the manifest."
+                              manifestName:
+                                type: string
+                                description: "An optional short string appended to the end of the OriginEndpoint URL."
+                              playlistType:
+                                type: string
+                                description: "The HTTP Live Streaming (HLS) playlist type."
+                                enum:
+                                  - "NONE"
+                                  - "EVENT"
+                                  - "VOD"
+                              playlistWindowSeconds:
+                                type: integer
+                                description: "The total duration (in seconds) of each playlist."
+                                minimum: 1
+                            required:
+                              - id
+                            additionalProperties: false
+                        segmentDurationSeconds:
+                          type: integer
+                          description: "Duration (in seconds) of each segment."
+                          minimum: 1
+                          maximum: 30
+                        segmentPrefix:
+                          type: string
+                          description: "An optional custom string that is prepended to the name of each segment."
+                        streamSelection:
+                          type: object
+                          description: "A StreamSelection configuration."
+                          properties:
+                            maxVideoBitsPerSecond:
+                              type: integer
+                              description: "The maximum video bitrate (bps) to include in output."
+                              minimum: 1
+                            minVideoBitsPerSecond:
+                              type: integer
+                              description: "The minimum video bitrate (bps) to include in output."
+                              minimum: 1
+                            streamOrder:
+                              type: string
+                              description: "A directive that determines the order of streams in the output."
+                              enum:
+                                - "ORIGINAL"
+                                - "VIDEO_BITRATE_ASCENDING"
+                                - "VIDEO_BITRATE_DESCENDING"
+                          additionalProperties: false
+                      additionalProperties: false
+                    dashPackage:
+                      type: object
+                      description: "A Dynamic Adaptive Streaming over HTTP (DASH) packaging configuration."
+                      properties:
+                        adsOnDeliveryRestrictions:
+                          type: string
+                          description: "The flags on SCTE-35 segmentation descriptors that have to be present for AWS Elemental MediaPackage to insert ad markers in the output manifest."
+                          enum:
+                            - "NONE"
+                            - "RESTRICTED"
+                            - "UNRESTRICTED"
+                            - "BOTH"
+                        adTriggers:
+                          type: array
+                          description: "Specifies the SCTE-35 message types that AWS Elemental MediaPackage treats as ad markers in the output manifest."
+                          items:
+                            type: string
+                            enum:
+                              - "SPLICE_INSERT"
+                              - "BREAK"
+                              - "PROVIDER_ADVERTISEMENT"
+                              - "DISTRIBUTOR_ADVERTISEMENT"
+                              - "PROVIDER_PLACEMENT_OPPORTUNITY"
+                              - "DISTRIBUTOR_PLACEMENT_OPPORTUNITY"
+                              - "PROVIDER_OVERLAY_PLACEMENT_OPPORTUNITY"
+                              - "DISTRIBUTOR_OVERLAY_PLACEMENT_OPPORTUNITY"
+                        encryption:
+                          type: object
+                          description: "A Dynamic Adaptive Streaming over HTTP (DASH) encryption configuration."
+                          additionalProperties: true
+                        includeIframeOnlyStream:
+                          type: boolean
+                          description: "When enabled, an I-Frame only stream will be included in the output."
+                        manifestLayout:
+                          type: string
+                          description: "Determines the position of some tags in the Media Presentation Description (MPD)."
+                          enum:
+                            - "FULL"
+                            - "COMPACT"
+                        manifestWindowSeconds:
+                          type: integer
+                          description: "Time window (in seconds) contained in each manifest."
+                          minimum: 1
+                        minBufferTimeSeconds:
+                          type: integer
+                          description: "Minimum duration (in seconds) that a player will buffer media before starting playback."
+                          minimum: 1
+                        minUpdatePeriodSeconds:
+                          type: integer
+                          description: "Minimum duration (in seconds) between potential changes to the Dynamic Adaptive Streaming over HTTP (DASH) Media Presentation Description (MPD)."
+                          minimum: 1
+                        periodTriggers:
+                          type: array
+                          description: "A list of triggers that controls when the outgoing Dynamic Adaptive Streaming over HTTP (DASH) Media Presentation Description (MPD) will be partitioned into multiple periods."
+                          items:
+                            type: string
+                        profile:
+                          type: string
+                          description: "The Dynamic Adaptive Streaming over HTTP (DASH) profile type."
+                          enum:
+                            - "NONE"
+                            - "HBBTV_1_5"
+                        segmentDurationSeconds:
+                          type: integer
+                          description: "Duration (in seconds) of each segment."
+                          minimum: 1
+                          maximum: 30
+                        segmentTemplateFormat:
+                          type: string
+                          description: "Determines the type of SegmentTemplate included in the Media Presentation Description (MPD)."
+                          enum:
+                            - "NUMBER_WITH_TIMELINE"
+                            - "TIME_WITH_TIMELINE"
+                            - "NUMBER_WITH_DURATION"
+                        streamSelection:
+                          type: object
+                          description: "A StreamSelection configuration."
+                          additionalProperties: true
+                        suggestedPresentationDelaySeconds:
+                          type: integer
+                          description: "Duration (in seconds) to delay live content before presentation."
+                          minimum: 1
+                        utcTiming:
+                          type: string
+                          description: "Determines the type of UTCTiming included in the Dynamic Adaptive Streaming over HTTP (DASH) Media Presentation Description (MPD)."
+                          enum:
+                            - "NONE"
+                            - "HTTP-HEAD"
+                            - "HTTP-ISO"
+                            - "HTTP-XSDATE"
+                        utcTimingUri:
+                          type: string
+                          description: "Specifies the value attribute of the UTCTiming field when utcTiming is set to HTTP-ISO, HTTP-HEAD or HTTP-XSDATE."
+                      additionalProperties: false
+                    hlsPackage:
+                      type: object
+                      description: "An HTTP Live Streaming (HLS) packaging configuration."
+                      properties:
+                        adMarkers:
+                          type: string
+                          description: "This setting controls how ad markers are included in the packaged OriginEndpoint."
+                          enum:
+                            - "NONE"
+                            - "SCTE35_ENHANCED"
+                            - "PASSTHROUGH"
+                            - "DATERANGE"
+                        adsOnDeliveryRestrictions:
+                          type: string
+                          description: "The flags on SCTE-35 segmentation descriptors that have to be present for AWS Elemental MediaPackage to insert ad markers in the output manifest."
+                          enum:
+                            - "NONE"
+                            - "RESTRICTED"
+                            - "UNRESTRICTED"
+                            - "BOTH"
+                        adTriggers:
+                          type: array
+                          description: "Specifies the SCTE-35 message types that AWS Elemental MediaPackage treats as ad markers in the output manifest."
+                          items:
+                            type: string
+                            enum:
+                              - "SPLICE_INSERT"
+                              - "BREAK"
+                              - "PROVIDER_ADVERTISEMENT"
+                              - "DISTRIBUTOR_ADVERTISEMENT"
+                              - "PROVIDER_PLACEMENT_OPPORTUNITY"
+                              - "DISTRIBUTOR_PLACEMENT_OPPORTUNITY"
+                              - "PROVIDER_OVERLAY_PLACEMENT_OPPORTUNITY"
+                              - "DISTRIBUTOR_OVERLAY_PLACEMENT_OPPORTUNITY"
+                        encryption:
+                          type: object
+                          description: "An HTTP Live Streaming (HLS) encryption configuration."
+                          additionalProperties: true
+                        includeDvbSubtitles:
+                          type: boolean
+                          description: "When enabled, MediaPackage passes through digital video broadcasting (DVB) subtitles into the output."
+                        includeIframeOnlyStream:
+                          type: boolean
+                          description: "When enabled, an I-Frame only stream will be included in the output."
+                        playlistType:
+                          type: string
+                          description: "The HTTP Live Streaming (HLS) playlist type."
+                          enum:
+                            - "NONE"
+                            - "EVENT"
+                            - "VOD"
+                        playlistWindowSeconds:
+                          type: integer
+                          description: "The total duration (in seconds) of each playlist."
+                          minimum: 1
+                        programDateTimeIntervalSeconds:
+                          type: integer
+                          description: "The interval (in seconds) between each EXT-X-PROGRAM-DATE-TIME tag inserted into manifests."
+                          minimum: 1
+                        segmentDurationSeconds:
+                          type: integer
+                          description: "Duration (in seconds) of each segment."
+                          minimum: 1
+                          maximum: 30
+                        streamSelection:
+                          type: object
+                          description: "A StreamSelection configuration."
+                          additionalProperties: true
+                        useAudioRenditionGroup:
+                          type: boolean
+                          description: "When enabled, audio streams will be placed in rendition groups in the output."
+                      additionalProperties: false
+                    mssPackage:
+                      type: object
+                      description: "A Microsoft Smooth Streaming (MSS) packaging configuration."
+                      properties:
+                        encryption:
+                          type: object
+                          description: "A Microsoft Smooth Streaming (MSS) encryption configuration."
+                          additionalProperties: true
+                        manifestWindowSeconds:
+                          type: integer
+                          description: "Time window (in seconds) contained in each manifest."
+                          minimum: 1
+                        segmentDurationSeconds:
+                          type: integer
+                          description: "Duration (in seconds) of each segment."
+                          minimum: 1
+                          maximum: 30
+                        streamSelection:
+                          type: object
+                          description: "A StreamSelection configuration."
+                          additionalProperties: true
+                      additionalProperties: false
+                    region:
+                      type: string
+                      description: "AWS region where the origin endpoint will be created."
+                      default: "us-east-1"
+                    tags:
+                      type: object
+                      description: "A map of tags to assign to the resource."
+                      additionalProperties:
+                        type: string
+                  required:
+                    - id
+                    - channelId
+                  additionalProperties: false
+                deletionPolicy:
+                  type: string
+                  enum:
+                    - Delete
+                    - Orphan
+                  default: Delete
+                  description: "DeletionPolicy specifies what will happen to the underlying external when this managed resource is deleted."
+                managementPolicies:
+                  type: array
+                  items:
+                    type: string
+                    enum:
+                      - "*"
+                      - Create
+                      - Update
+                      - Delete
+                      - LateInitialize
+                      - Observe
+                  default: ["*"]
+                  description: "ManagementPolicies specify the array of actions Crossplane is allowed to take on the managed and external resources."
+                providerConfigRef:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                  required:
+                    - name
+                  description: "ProviderConfigReference specifies how the provider that will be used to create, observe, update, and delete this managed resource should be configured."
+                publishConnectionDetailsTo:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                    configRef:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                      required:
+                        - name
+                    metadata:
+                      type: object
+                      properties:
+                        labels:
+                          type: object
+                          additionalProperties:
+                            type: string
+                        annotations:
+                          type: object
+                          additionalProperties:
+                            type: string
+                        type:
+                          type: array
+                          items:
+                            type: string
+                  required:
+                    - name
+                  description: "PublishConnectionDetailsTo specifies the connection secret config which contains a name, metadata and a reference to secret store config to which any connection details for this managed resource should be written."
+                writeConnectionSecretsToNamespace:
+                  type: string
+                  description: "WriteConnectionSecretsToNamespace specifies the namespace in which the connection secrets of this managed resource should be written."
+              required:
+                - parameters
+              additionalProperties: false
+            status:
+              type: object
+              properties:
+                conditions:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      lastTransitionTime:
+                        type: string
+                        format: date-time
+                      message:
+                        type: string
+                      reason:
+                        type: string
+                      status:
+                        type: string
+                      type:
+                        type: string
+                    required:
+                      - lastTransitionTime
+                      - reason
+                      - status
+                      - type
+                connectionDetails:
+                  type: object
+                  properties:
+                    lastPublishedTime:
+                      type: string
+                      format: date-time
+                arn:
+                  type: string
+                  description: "The Amazon Resource Name (ARN) assigned to the OriginEndpoint."
+                url:
+                  type: string
+                  description: "The URL of the packaged OriginEndpoint for consumption."
+          required:
+            - spec
+      additionalPrinterColumns:
+        - name: READY
+          type: string
+          jsonPath: ".status.conditions[?(@.type=='Ready')].status"
+        - name: SYNCED
+          type: string
+          jsonPath: ".status.conditions[?(@.type=='Synced')].status"
+        - name: EXTERNAL-NAME
+          type: string
+          jsonPath: ".metadata.annotations.crossplane\\.io/external-name"
+        - name: CHANNEL-ID
+          type: string
+          jsonPath: ".spec.parameters.channelId"
+        - name: AGE
+          type: date
+          jsonPath: ".metadata.creationTimestamp"
