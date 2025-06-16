@@ -1,0 +1,15 @@
+apiVersion: mediaconnect.aws.livewyer.io/v1alpha1
+kind: Flow
+metadata:
+  name: flow-test-a
+  labels:
+    mediaconnect.aws.livewyer.io/flow: flow-test
+spec:
+  providerConfigRef:
+    name: aws
+  parameters:
+    region: us-east-1
+    flowSize: MEDIUM
+    source:
+      GatewayBridgeSource:
+        BridgeArn: ""

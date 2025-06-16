@@ -1,0 +1,92 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: jobtemplate.mediaconvert.aws.livewyer.io
+spec:
+  compositeTypeRef:
+    apiVersion: mediaconvert.aws.livewyer.io/v1alpha1
+    kind: XJobTemplate
+  mode: Pipeline
+  pipeline:
+    - step: go-templating
+      functionRef:
+        name: function-go-templating
+      input:
+        apiVersion: gotemplating.fn.crossplane.io/v1beta1
+        kind: GoTemplate
+        source: Inline
+        inline:
+          template: |
+            {{ $id := .observed.composite.resource.metadata.name -}}
+            {{ $spec := .observed.composite.resource.spec.parameters -}}
+
+            apiVersion: cloudformation.aws.upbound.io/v1beta1
+            kind: Stack
+            metadata:
+              name: {{ $id }}
+              annotations:
+                {{ setResourceNameAnnotation (printf "jobtemplate.mediaconvert.aws.livewyer.io/%s" $id) }}
+              labels:
+                mediaconvert.aws.livewyer.io/jobtemplate: {{ $id }}
+            spec:
+            {{- if .observed.composite.resource.spec.providerConfigRef }}
+              providerConfigRef:
+            {{ toYaml .observed.composite.resource.spec.providerConfigRef | indent 4 }}
+            {{- end }}
+            {{- if .observed.composite.resource.spec.deletionPolicy }}
+              deletionPolicy: {{ .observed.composite.resource.spec.deletionPolicy }}
+            {{- end }}
+            {{- if .observed.composite.resource.spec.managementPolicies }}
+              managementPolicies:
+            {{ toYaml .observed.composite.resource.spec.managementPolicies | indent 4 }}
+            {{- end }}
+            {{- if .observed.composite.resource.spec.publishConnectionDetailsTo }}
+              publishConnectionDetailsTo:
+            {{ toYaml .observed.composite.resource.spec.publishConnectionDetailsTo | indent 4 }}
+            {{- end }}
+            {{- if .observed.composite.resource.spec.writeConnectionSecretsToNamespace }}
+              writeConnectionSecretsToNamespace: {{ .observed.composite.resource.spec.writeConnectionSecretsToNamespace }}
+            {{- end }}
+              forProvider:
+                region: {{ $spec.region }}
+                name: {{ $id }}
+                templateBody: |
+                  AWSTemplateFormatVersion: '2010-09-09'
+                  Description: {{ default (printf "jobtemplate.mediaconvert.aws.livewyer.io/%s" $id) $spec.description }}
+                  Resources:
+                    JobTemplate:
+                      Type: 'AWS::MediaConvert::JobTemplate'
+                      Properties:
+                        Name: {{ $id }}
+                        {{- if $spec.category }}
+                        Category: {{ $spec.category }}
+                        {{- end }}
+                        {{- if $spec.description }}
+                        Description: {{ $spec.description }}
+                        {{- end }}
+                        {{- if $spec.priority }}
+                        Priority: {{ $spec.priority }}
+                        {{- end }}
+                        {{- if $spec.queue }}
+                        Queue: {{ $spec.queue }}
+                        {{- end }}
+                        SettingsJson:
+                          OutputGroups: {{ toJson $spec.outputGroups }}
+                        {{- if $spec.tags }}
+                        Tags: {{ toJson $spec.tags }}
+                        {{- end }}
+
+            ---
+
+            {{ $awscfn := getComposedResource . (printf "jobtemplate.mediaconvert.aws.livewyer.io/%s" $id) }}
+            apiVersion: {{ .observed.composite.resource.apiVersion }}
+            kind: {{ .observed.composite.resource.kind }}
+            metadata:
+              labels:
+                mediaconvert.aws.livewyer.io/jobtemplate: {{ $id }}
+            status:
+              atProvider: {{ toJson $awscfn.status.atProvider }}
+
+    - step: automatically-detect-ready-composed-resources
+      functionRef:
+        name: function-auto-ready

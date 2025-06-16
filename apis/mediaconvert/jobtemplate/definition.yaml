@@ -1,0 +1,186 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: CompositeResourceDefinition
+metadata:
+  name: xjobtemplates.mediaconvert.aws.livewyer.io
+spec:
+  group: mediaconvert.aws.livewyer.io
+  names:
+    kind: XJobTemplate
+    plural: xjobtemplates
+  claimNames:
+    kind: JobTemplate
+    plural: jobtemplates
+  versions:
+    - name: v1alpha1
+      served: true
+      referenceable: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              properties:
+                parameters:
+                  type: object
+                  properties:
+                    category:
+                      type: string
+                      description: "An optional category you create to organize your job templates."
+                    description:
+                      type: string
+                      description: "An optional description you create for each job template."
+                    priority:
+                      type: integer
+                      description: "Specify the relative priority for this job. In any given queue, the service begins processing the job with the highest value first. Acceptable values: -50 to 50."
+                      minimum: -50
+                      maximum: 50
+                    queue:
+                      type: string
+                      description: "Optional. The queue that jobs created from this template are assigned to. If you don't specify this, jobs will be sent to the default queue."
+                    outputGroups:
+                      type: array
+                      description: "MediaConvert places outputs in the same output group container."
+                      items:
+                        type: object
+                        properties:
+                          Name:
+                            type: string
+                            description: "Name of the output group."
+                          OutputGroupSettings:
+                            type: object
+                            description: "Output group settings that specify how the service handles outputs in this group."
+                            properties:
+                              FileGroupSettings:
+                                type: object
+                                description: "Settings related to your File output group."
+                              Type:
+                                type: string
+                                description: "Type of output group."
+                                enum:
+                                  - "FILE_GROUP_SETTINGS"
+                          Outputs:
+                            type: array
+                            description: "This object holds groups of encoding settings, one group of settings per output."
+                            items:
+                              type: object
+                              properties:
+                                Extension:
+                                  type: string
+                                  description: "Use Extension to specify the file extension for the outputs in this output group."
+                                NameModifier:
+                                  type: string
+                                  description: "Use Name modifier to have the service add a string to the end of each output filename."
+                                Preset:
+                                  type: string
+                                  description: "Use Preset to specify a preset for your transcoding settings."
+                    region:
+                      type: string
+                      description: "AWS region where the job template will be created."
+                    tags:
+                      type: object
+                      description: "A map of tags to assign to the resource."
+                      additionalProperties:
+                        type: string
+                  required:
+                    - outputGroups
+                deletionPolicy:
+                  type: string
+                  enum:
+                    - Delete
+                    - Orphan
+                  default: Delete
+                  description: "DeletionPolicy specifies what will happen to the underlying external when this managed resource is deleted."
+                managementPolicies:
+                  type: array
+                  items:
+                    type: string
+                    enum:
+                      - "*"
+                      - Create
+                      - Update
+                      - Delete
+                      - LateInitialize
+                      - Observe
+                  default: ["*"]
+                  description: "ManagementPolicies specify the array of actions Crossplane is allowed to take on the managed and external resources."
+                providerConfigRef:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                  required:
+                    - name
+                  description: "ProviderConfigReference specifies how the provider that will be used to create, observe, update, and delete this managed resource should be configured."
+                publishConnectionDetailsTo:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                    configRef:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                      required:
+                        - name
+                    metadata:
+                      type: object
+                      properties:
+                        labels:
+                          type: object
+                          additionalProperties:
+                            type: string
+                        annotations:
+                          type: object
+                          additionalProperties:
+                            type: string
+                        type:
+                          type: array
+                          items:
+                            type: string
+                  required:
+                    - name
+                  description: "PublishConnectionDetailsTo specifies the connection secret config which contains a name, metadata and a reference to secret store config to which any connection details for this managed resource should be written."
+                writeConnectionSecretsToNamespace:
+                  type: string
+                  description: "WriteConnectionSecretsToNamespace specifies the namespace in which the connection secrets of this managed resource should be written."
+              required:
+                - parameters
+              additionalProperties: false
+            status:
+              type: object
+              properties:
+                conditions:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      lastTransitionTime:
+                        type: string
+                        format: date-time
+                      message:
+                        type: string
+                      reason:
+                        type: string
+                      status:
+                        type: string
+                      type:
+                        type: string
+                    required:
+                      - lastTransitionTime
+                      - reason
+                      - status
+                      - type
+                connectionDetails:
+                  type: object
+                  properties:
+                    lastPublishedTime:
+                      type: string
+                      format: date-time
+                atProvider:
+                  type: object
+                  description: "Provider state."
+                  x-kubernetes-preserve-unknown-fields: true
+          required:
+            - spec

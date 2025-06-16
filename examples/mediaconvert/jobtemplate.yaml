@@ -1,0 +1,36 @@
+apiVersion: mediaconvert.aws.livewyer.io/v1alpha1
+kind: JobTemplate
+metadata:
+  name: jobtemplate-test
+  labels:
+    mediaconvert.aws.livewyer.io/jobtemplate: jobtemplate-test
+spec:
+  providerConfigRef:
+    name: aws
+  parameters:
+    region: us-east-1
+    queue: arn:aws:mediaconvert:us-east-1:627399506400:queues/mediaconvert-queue-b
+    outputGroups:
+      - Name: "File Group"
+        OutputGroupSettings:
+          FileGroupSettings: {}
+          Type: "FILE_GROUP_SETTINGS"
+        Outputs:
+          - Extension: "mp4"
+            NameModifier: "_Generic_Uhd_Mp4_Hevc_Aac_16x9_3840x2160p_24Hz_8Mbps"
+            Preset: "System-Generic_Uhd_Mp4_Hevc_Aac_16x9_3840x2160p_24Hz_8Mbps"
+          - Extension: "mp4"
+            NameModifier: "_Generic_Hd_Mp4_Hevc_Aac_16x9_1920x1080p_24Hz_4.5Mbps"
+            Preset: "System-Generic_Hd_Mp4_Hevc_Aac_16x9_1920x1080p_24Hz_4.5Mbps"
+          - Extension: "mp4"
+            NameModifier: "_Generic_Hd_Mp4_Hevc_Aac_16x9_1280x720p_24Hz_3.0Mbps"
+            Preset: "System-Generic_Hd_Mp4_Hevc_Aac_16x9_1280x720p_24Hz_3.0Mbps"
+          - Extension: "mp4"
+            NameModifier: "_Generic_Hd_Mp4_Avc_Aac_16x9_1920x1080p_24Hz_6Mbps"
+            Preset: "System-Generic_Hd_Mp4_Avc_Aac_16x9_1920x1080p_24Hz_6Mbps"
+          - Extension: "mp4"
+            NameModifier: "_Generic_Hd_Mp4_Avc_Aac_16x9_1280x720p_24Hz_4.5Mbps"
+            Preset: "System-Generic_Hd_Mp4_Avc_Aac_16x9_1280x720p_24Hz_4.5Mbps"
+          - Extension: "mp4"
+            NameModifier: "_Generic_Sd_Mp4_Avc_Aac_4x3_640x480p_24Hz_1.5Mbps"
+            Preset: "System-Generic_Sd_Mp4_Avc_Aac_4x3_640x480p_24Hz_1.5Mbps"

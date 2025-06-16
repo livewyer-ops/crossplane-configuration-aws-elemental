@@ -1,0 +1,108 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: originendpoint.mediapackage.aws.livewyer.io
+spec:
+  compositeTypeRef:
+    apiVersion: mediapackage.aws.livewyer.io/v1alpha1
+    kind: XOriginEndpoint
+  mode: Pipeline
+  pipeline:
+    - step: go-templating
+      functionRef:
+        name: function-go-templating
+      input:
+        apiVersion: gotemplating.fn.crossplane.io/v1beta1
+        kind: GoTemplate
+        source: Inline
+        inline:
+          template: |
+            {{ $id := .observed.composite.resource.metadata.name -}}
+            {{ $spec := .observed.composite.resource.spec.parameters -}}
+
+            apiVersion: cloudcontrol.aws.upbound.io/v1beta1
+            kind: Resource
+            metadata:
+              name: {{ $id }}
+              annotations:
+                {{ setResourceNameAnnotation (printf "originendpoint.mediapackage.aws.livewyer.io/%s" $id) }}
+              labels:
+                mediapackage.aws.livewyer.io/originendpoint: {{ $id }}
+            spec:
+            {{- if .observed.composite.resource.spec.providerConfigRef }}
+              providerConfigRef:
+            {{ toYaml .observed.composite.resource.spec.providerConfigRef | indent 4 }}
+            {{- end }}
+            {{- if .observed.composite.resource.spec.deletionPolicy }}
+              deletionPolicy: {{ .observed.composite.resource.spec.deletionPolicy }}
+            {{- end }}
+            {{- if .observed.composite.resource.spec.managementPolicies }}
+              managementPolicies:
+            {{ toYaml .observed.composite.resource.spec.managementPolicies | indent 4 }}
+            {{- end }}
+            {{- if .observed.composite.resource.spec.publishConnectionDetailsTo }}
+              publishConnectionDetailsTo:
+            {{ toYaml .observed.composite.resource.spec.publishConnectionDetailsTo | indent 4 }}
+            {{- end }}
+            {{- if .observed.composite.resource.spec.writeConnectionSecretsToNamespace }}
+              writeConnectionSecretsToNamespace: {{ .observed.composite.resource.spec.writeConnectionSecretsToNamespace }}
+            {{- end }}
+              forProvider:
+                typeName: AWS::MediaPackage::OriginEndpoint
+                region: {{ $spec.region }}
+                desiredState: |-
+                  {
+                    "Id": "{{ $id }}",
+                    "ChannelId": "{{ $spec.channelId }}"
+                    {{- if $spec.description }},
+                    "Description": "{{ $spec.description }}"
+                    {{- end }}
+                    {{- if $spec.manifestName }},
+                    "ManifestName": "{{ $spec.manifestName }}"
+                    {{- end }}
+                    {{- if $spec.origination }},
+                    "Origination": "{{ $spec.origination }}"
+                    {{- end }}
+                    {{- if $spec.startoverWindowSeconds }},
+                    "StartoverWindowSeconds": {{ $spec.startoverWindowSeconds }}
+                    {{- end }}
+                    {{- if $spec.timeDelaySeconds }},
+                    "TimeDelaySeconds": {{ $spec.timeDelaySeconds }}
+                    {{- end }}
+                    {{- if $spec.whitelist }},
+                    "Whitelist": {{ toJson $spec.whitelist }}
+                    {{- end }}
+                    {{- if $spec.authorization }},
+                    "Authorization": {{ toJson $spec.authorization }}
+                    {{- end }}
+                    {{- if $spec.cmafPackage }},
+                    "CmafPackage": {{ toJson $spec.cmafPackage }}
+                    {{- end }}
+                    {{- if $spec.dashPackage }},
+                    "DashPackage": {{ toJson $spec.dashPackage }}
+                    {{- end }}
+                    {{- if $spec.hlsPackage }},
+                    "HlsPackage": {{ toJson $spec.hlsPackage }}
+                    {{- end }}
+                    {{- if $spec.mssPackage }},
+                    "MssPackage": {{ toJson $spec.mssPackage }}
+                    {{- end }}
+                    {{- if $spec.tags }},
+                    "Tags": {{ toJson $spec.tags }}
+                    {{- end }}
+                  }
+
+            ---
+
+            {{ $awscc := getComposedResource . (printf "originendpoint.mediapackage.aws.livewyer.io/%s" $id) }}
+            apiVersion: {{ .observed.composite.resource.apiVersion }}
+            kind: {{ .observed.composite.resource.kind }}
+            metadata:
+              labels:
+                mediapackage.aws.livewyer.io/originendpoint: {{ $id }}
+            status:
+              atProvider: {{ toJson $awscc.status.atProvider }}
+
+    - step: automatically-detect-ready-composed-resources
+      functionRef:
+        name: function-auto-ready

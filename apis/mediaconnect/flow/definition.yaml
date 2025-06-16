@@ -1,0 +1,412 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: CompositeResourceDefinition
+metadata:
+  name: xflows.mediaconnect.aws.livewyer.io
+spec:
+  group: mediaconnect.aws.livewyer.io
+  names:
+    kind: XFlow
+    plural: xflows
+  claimNames:
+    kind: Flow
+    plural: flows
+  versions:
+    - name: v1alpha1
+      served: true
+      referenceable: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              properties:
+                parameters:
+                  type: object
+                  properties:
+                    availabilityZone:
+                      type: string
+                      description: "The Availability Zone that you want to create the flow in. These options are limited to the Availability Zones within the current AWS Region."
+                    flowSize:
+                      type: string
+                      description: "Determines the processing capacity and feature set of the flow. Set this optional parameter to LARGE if you want to enable NDI outputs on the flow."
+                      enum:
+                        - "MEDIUM"
+                        - "LARGE"
+                    source:
+                      type: object
+                      description: "The source of the flow."
+                      properties:
+                        Decryption:
+                          type: object
+                          description: "The type of encryption that is used on the content ingested from the source."
+                          properties:
+                            Algorithm:
+                              type: string
+                              description: "The type of algorithm that is used for the encryption (such as aes128, aes192, or aes256)."
+                              enum:
+                                - "aes128"
+                                - "aes192"
+                                - "aes256"
+                            ConstantInitializationVector:
+                              type: string
+                              description: "A 128-bit, 16-byte hex value represented by a 32-character string, to be used with the key for encrypting content."
+                            DeviceId:
+                              type: string
+                              description: "The value of one of the devices that you configured with your digital rights management (DRM) platform key provider."
+                            KeyType:
+                              type: string
+                              description: "The type of key that is used for the encryption."
+                              enum:
+                                - "speke"
+                                - "static-key"
+                                - "srt-password"
+                            Region:
+                              type: string
+                              description: "The AWS Region that the API Gateway proxy endpoint was created in."
+                            ResourceId:
+                              type: string
+                              description: "An identifier for the content."
+                            RoleArn:
+                              type: string
+                              description: "The ARN of the role that you created during setup (when you set up AWS Elemental MediaConnect as a trusted entity)."
+                            SecretArn:
+                              type: string
+                              description: "The ARN of the secret that you created in AWS Secrets Manager to store the encryption key."
+                            Url:
+                              type: string
+                              description: "The URL from the API Gateway proxy that you set up to talk to your key server."
+                        Description:
+                          type: string
+                          description: "A description for the source."
+                        EntitlementArn:
+                          type: string
+                          description: "The ARN of the entitlement that allows you to subscribe to content that comes from another AWS account."
+                        GatewayBridgeSource:
+                          type: object
+                          description: "The source configuration for cloud flows receiving a stream from a bridge."
+                          properties:
+                            BridgeArn:
+                              type: string
+                              description: "The ARN of the bridge feeding this flow."
+                            VpcInterfaceAttachment:
+                              type: object
+                              description: "The name of the VPC interface attachment to use for this bridge source."
+                              properties:
+                                VpcInterfaceName:
+                                  type: string
+                                  description: "The name of the VPC interface to use for this resource."
+                          required:
+                            - BridgeArn
+                        IngestPort:
+                          type: integer
+                          description: "The port that the flow uses to receive incoming content."
+                          minimum: 1
+                          maximum: 65535
+                        MaxBitrate:
+                          type: integer
+                          description: "The smoothing max bitrate for RIST, RTP, and RTP-FEC streams."
+                          minimum: 1
+                        MaxLatency:
+                          type: integer
+                          description: "The maximum latency in milliseconds."
+                          minimum: 1
+                          maximum: 15000
+                        MaxSyncBuffer:
+                          type: integer
+                          description: "The size of the buffer (in milliseconds) to use to sync incoming source data."
+                          minimum: 1
+                        MinLatency:
+                          type: integer
+                          description: "The minimum latency in milliseconds for SRT-based streams."
+                          minimum: 1
+                          maximum: 15000
+                        Name:
+                          type: string
+                          description: "The name of the source."
+                        Protocol:
+                          type: string
+                          description: "The protocol that is used by the source."
+                          enum:
+                            - "zixi-push"
+                            - "rtp-fec"
+                            - "rtp"
+                            - "rist"
+                            - "st2110-jpegxs"
+                            - "cdi"
+                            - "srt-listener"
+                            - "srt-caller"
+                            - "fujitsu-qos"
+                        SenderControlPort:
+                          type: integer
+                          description: "The port that the flow uses to send outbound requests to initiate connection with the sender."
+                          minimum: 1
+                          maximum: 65535
+                        SenderIpAddress:
+                          type: string
+                          description: "The IP address that the flow communicates with to initiate connection with the sender."
+                        SourceArn:
+                          type: string
+                          description: "The ARN of the source."
+                        SourceIngestPort:
+                          type: string
+                          description: "The port that the flow listens on for incoming content. If the protocol of the source is Zixi, the port must be set to 2088."
+                        SourceListenerAddress:
+                          type: string
+                          description: "Source IP or domain name for SRT-caller protocol."
+                        SourceListenerPort:
+                          type: integer
+                          description: "Source port for SRT-caller protocol."
+                          minimum: 1
+                          maximum: 65535
+                        StreamId:
+                          type: string
+                          description: "The stream ID that you want to use for this transport."
+                        VpcInterfaceName:
+                          type: string
+                          description: "The name of the VPC interface to use for this source."
+                        WhitelistCidr:
+                          type: string
+                          description: "The range of IP addresses that should be allowed to contribute content to your source."
+                          pattern: "^([0-9]{1,3}\\.){3}[0-9]{1,3}/([0-9]|[1-2][0-9]|3[0-2])$"
+                    sourceFailoverConfig:
+                      type: object
+                      description: "The settings for source failover."
+                      properties:
+                        FailoverMode:
+                          type: string
+                          description: "The type of failover you choose for this flow."
+                          enum:
+                            - "MERGE"
+                            - "FAILOVER"
+                        RecoveryWindow:
+                          type: integer
+                          description: "Recovery window time to look for dash-7 packets."
+                          minimum: 100
+                          maximum: 15000
+                        SourcePriority:
+                          type: object
+                          description: "The priority you want to assign to a source."
+                          properties:
+                            primarySource:
+                              type: string
+                              description: "The name of the source you choose as the primary source for this flow."
+                        State:
+                          type: string
+                          description: "The state of source failover on the flow."
+                          enum:
+                            - "ENABLED"
+                            - "DISABLED"
+                          default: "DISABLED"
+                    mediaStreams:
+                      type: array
+                      description: "The media streams that are associated with the flow."
+                      items:
+                        type: object
+                        properties:
+                          Attributes:
+                            type: object
+                            description: "The sample rate, bitrate, and other attributes of the media stream."
+                            additionalProperties: true
+                          ClockRate:
+                            type: integer
+                            description: "The sample rate (in Hz) for the stream."
+                            minimum: 1
+                          Description:
+                            type: string
+                            description: "A description that can help you quickly identify what your media stream is used for."
+                          Fmt:
+                            type: integer
+                            description: "The format type number (sometimes referred to as RTP payload type) of the media stream."
+                            minimum: 0
+                            maximum: 127
+                          MediaStreamId:
+                            type: integer
+                            description: "A unique identifier for the media stream."
+                            minimum: 0
+                          MediaStreamName:
+                            type: string
+                            description: "A name that helps you distinguish one media stream from another."
+                          MediaStreamType:
+                            type: string
+                            description: "The type of media stream."
+                            enum:
+                              - "video"
+                              - "audio"
+                              - "ancillary-data"
+                          VideoFormat:
+                            type: string
+                            description: "The resolution of the video."
+                            enum:
+                              - "2160p"
+                              - "1080p"
+                              - "1080i"
+                              - "720p"
+                              - "480p"
+                        required:
+                          - MediaStreamId
+                          - MediaStreamName
+                          - MediaStreamType
+                    vpcInterfaces:
+                      type: array
+                      description: "The VPC interfaces to use when you want your flow to use a VPC interface."
+                      items:
+                        type: object
+                        properties:
+                          Name:
+                            type: string
+                            description: "The name of the VPC interface."
+                          NetworkInterfaceType:
+                            type: string
+                            description: "The type of network interface."
+                            enum:
+                              - "ena"
+                              - "efa"
+                          RoleArn:
+                            type: string
+                            description: "Role ARN MediaConnect assumes to create the ENI in your VPC."
+                          SecurityGroupIds:
+                            type: array
+                            description: "Security Group IDs to be used on ENI."
+                            items:
+                              type: string
+                          SubnetId:
+                            type: string
+                            description: "Subnet must be in the AZ of the Flow."
+                        required:
+                          - Name
+                          - RoleArn
+                          - SecurityGroupIds
+                          - SubnetId
+                      maxItems: 3
+                    maintenance:
+                      type: object
+                      description: "The maintenance settings for the flow."
+                      properties:
+                        MaintenanceDay:
+                          type: string
+                          description: "A day of a week when the maintenance will happen."
+                          enum:
+                            - "Monday"
+                            - "Tuesday"
+                            - "Wednesday"
+                            - "Thursday"
+                            - "Friday"
+                            - "Saturday"
+                            - "Sunday"
+                        MaintenanceStartHour:
+                          type: string
+                          description: "UTC time when the maintenance will happen."
+                          pattern: "^([01]?[0-9]|2[0-3]):[0-5][0-9]$"
+                      required:
+                        - MaintenanceDay
+                        - MaintenanceStartHour
+                    region:
+                      type: string
+                      description: "AWS region where the flow will be created."
+                    tags:
+                      type: object
+                      description: "A map of tags to assign to the resource."
+                      additionalProperties:
+                        type: string
+                  required:
+                    - source
+                deletionPolicy:
+                  type: string
+                  enum:
+                    - Delete
+                    - Orphan
+                  default: Delete
+                  description: "DeletionPolicy specifies what will happen to the underlying external when this managed resource is deleted."
+                managementPolicies:
+                  type: array
+                  items:
+                    type: string
+                    enum:
+                      - "*"
+                      - Create
+                      - Update
+                      - Delete
+                      - LateInitialize
+                      - Observe
+                  default: ["*"]
+                  description: "ManagementPolicies specify the array of actions Crossplane is allowed to take on the managed and external resources."
+                providerConfigRef:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                  required:
+                    - name
+                  description: "ProviderConfigReference specifies how the provider that will be used to create, observe, update, and delete this managed resource should be configured."
+                publishConnectionDetailsTo:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                    configRef:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                      required:
+                        - name
+                    metadata:
+                      type: object
+                      properties:
+                        labels:
+                          type: object
+                          additionalProperties:
+                            type: string
+                        annotations:
+                          type: object
+                          additionalProperties:
+                            type: string
+                        type:
+                          type: array
+                          items:
+                            type: string
+                  required:
+                    - name
+                  description: "PublishConnectionDetailsTo specifies the connection secret config which contains a name, metadata and a reference to secret store config to which any connection details for this managed resource should be written."
+                writeConnectionSecretsToNamespace:
+                  type: string
+                  description: "WriteConnectionSecretsToNamespace specifies the namespace in which the connection secrets of this managed resource should be written."
+              required:
+                - parameters
+            status:
+              type: object
+              properties:
+                conditions:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      lastTransitionTime:
+                        type: string
+                        format: date-time
+                      message:
+                        type: string
+                      reason:
+                        type: string
+                      status:
+                        type: string
+                      type:
+                        type: string
+                    required:
+                      - lastTransitionTime
+                      - reason
+                      - status
+                      - type
+                connectionDetails:
+                  type: object
+                  properties:
+                    lastPublishedTime:
+                      type: string
+                      format: date-time
+                atProvider:
+                  type: object
+                  description: "Porvider state."
+                  x-kubernetes-preserve-unknown-fields: true
+          required:
+            - spec

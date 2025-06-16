@@ -1,0 +1,40 @@
+apiVersion: medialive.aws.upbound.io/v1beta2
+kind: Multiplex
+metadata:
+  name: multiplex-test
+spec:
+  providerConfigRef:
+    name: aws
+  forProvider:
+    region: us-east-1
+    name: multiplex-a
+    availabilityZones:
+      - us-east-1a
+      - us-east-1b
+    multiplexSettings:
+      maximumVideoBufferDelayMilliseconds: 1000
+      transportStreamBitrate: 1000000
+      transportStreamId: 1
+      transportStreamReservedBitrate: 1
+    startMultiplex: true
+
+---
+apiVersion: medialive.aws.livewyer.io/v1alpha1
+kind: MultiplexProgram
+metadata:
+  name: multiplexprogram-test
+spec:
+  providerConfigRef:
+    name: aws
+  parameters:
+    region: us-east-1
+    multiplexId: ""
+    programName: program_a
+    multiplexProgramSettings:
+      PreferredChannelPipeline: CURRENTLY_ACTIVE
+      ProgramNumber: 1
+      ServiceDescriptor:
+        ProviderName: sample-provider
+        ServiceName: service-a
+      VideoSettings:
+        ConstantBitrate: 100000

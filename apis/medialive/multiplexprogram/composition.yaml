@@ -1,0 +1,87 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: multiplexprogram.medialive.aws.livewyer.io
+spec:
+  compositeTypeRef:
+    apiVersion: medialive.aws.livewyer.io/v1alpha1
+    kind: XMultiplexProgram
+  mode: Pipeline
+  pipeline:
+    - step: go-templating
+      functionRef:
+        name: function-go-templating
+      input:
+        apiVersion: gotemplating.fn.crossplane.io/v1beta1
+        kind: GoTemplate
+        source: Inline
+        inline:
+          template: |
+            {{ $id := .observed.composite.resource.metadata.name -}}
+            {{ $spec := .observed.composite.resource.spec.parameters -}}
+
+            apiVersion: cloudcontrol.aws.upbound.io/v1beta1
+            kind: Resource
+            metadata:
+              name: {{ $id }}
+              annotations:
+                {{ setResourceNameAnnotation (printf "multiplexprogram.medialive.aws.livewyer.io/%s" $id) }}
+              labels:
+                medialive.aws.livewyer.io/multiplexprogram: {{ $id }}
+            spec:
+            {{- if .observed.composite.resource.spec.providerConfigRef }}
+              providerConfigRef:
+            {{ toYaml .observed.composite.resource.spec.providerConfigRef | indent 4 }}
+            {{- end }}
+            {{- if .observed.composite.resource.spec.deletionPolicy }}
+              deletionPolicy: {{ .observed.composite.resource.spec.deletionPolicy }}
+            {{- end }}
+            {{- if .observed.composite.resource.spec.managementPolicies }}
+              managementPolicies:
+            {{ toYaml .observed.composite.resource.spec.managementPolicies | indent 4 }}
+            {{- end }}
+            {{- if .observed.composite.resource.spec.publishConnectionDetailsTo }}
+              publishConnectionDetailsTo:
+            {{ toYaml .observed.composite.resource.spec.publishConnectionDetailsTo | indent 4 }}
+            {{- end }}
+            {{- if .observed.composite.resource.spec.writeConnectionSecretsToNamespace }}
+              writeConnectionSecretsToNamespace: {{ .observed.composite.resource.spec.writeConnectionSecretsToNamespace }}
+            {{- end }}
+              forProvider:
+                typeName: AWS::MediaLive::Multiplexprogram
+                region: {{ $spec.region }}
+                desiredState: |-
+                  {
+                    "MultiplexId": "{{ $spec.multiplexId }}",
+                    "ProgramName": "{{ $spec.programName }}"
+                    {{- if $spec.multiplexProgramSettings }},
+                    "MultiplexProgramSettings": {{ toJson $spec.multiplexProgramSettings }}
+                    {{- end }}
+                    {{- if $spec.packetIdentifiersMap }},
+                    "PacketIdentifiersMap": {{ toJson $spec.packetIdentifiersMap }}
+                    {{- end }}
+                    {{- if $spec.pipelineDetails }},
+                    "PipelineDetails": {{ toJson $spec.pipelineDetails }}
+                    {{- end }}
+                    {{- if $spec.preferredChannelPipeline }},
+                    "PreferredChannelPipeline": "{{ $spec.preferredChannelPipeline }}"
+                    {{- end }}
+                    {{- if $spec.tags }},
+                    "Tags": {{ toJson $spec.tags }}
+                    {{- end }}
+                  }
+
+            ---
+
+            {{ $awscc := getComposedResource . (printf "multiplexprogram.medialive.aws.livewyer.io/%s" $id) }}
+            apiVersion: {{ .observed.composite.resource.apiVersion }}
+            kind: {{ .observed.composite.resource.kind }}
+            metadata:
+              labels:
+                medialive.aws.livewyer.io/multiplexprogram: {{ $id }}
+            status:
+              atProvider: {{ toJson $awscc.status.atProvider }}
+
+    - step: automatically-detect-ready-composed-resources
+      functionRef:
+        name: function-auto-ready

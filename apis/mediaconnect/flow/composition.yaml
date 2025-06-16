@@ -1,0 +1,91 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: flow.mediaconnect.aws.livewyer.io
+spec:
+  compositeTypeRef:
+    apiVersion: mediaconnect.aws.livewyer.io/v1alpha1
+    kind: XFlow
+  mode: Pipeline
+  pipeline:
+    - step: go-templating
+      functionRef:
+        name: function-go-templating
+      input:
+        apiVersion: gotemplating.fn.crossplane.io/v1beta1
+        kind: GoTemplate
+        source: Inline
+        inline:
+          template: |
+            {{ $id := .observed.composite.resource.metadata.name -}}
+            {{ $spec := .observed.composite.resource.spec.parameters -}}
+            {{ $status := getCompositeResource . | getResourceCondition "atProvider" }}
+
+            apiVersion: cloudcontrol.aws.upbound.io/v1beta1
+            kind: Resource
+            metadata:
+              name: {{ $id }}
+              annotations:
+                {{ setResourceNameAnnotation (printf "flow.mediaconnect.aws.livewyer.io/%s" $id) }}
+              labels:
+                mediaconnect.aws.livewyer.io/flow: {{ $id }}
+            spec:
+            {{- if .observed.composite.resource.spec.providerConfigRef }}
+              providerConfigRef:
+            {{ toYaml .observed.composite.resource.spec.providerConfigRef | indent 4 }}
+            {{- end }}
+            {{- if .observed.composite.resource.spec.deletionPolicy }}
+              deletionPolicy: {{ .observed.composite.resource.spec.deletionPolicy }}
+            {{- end }}
+            {{- if .observed.composite.resource.spec.managementPolicies }}
+              managementPolicies:
+            {{ toYaml .observed.composite.resource.spec.managementPolicies | indent 4 }}
+            {{- end }}
+            {{- if .observed.composite.resource.spec.publishConnectionDetailsTo }}
+              publishConnectionDetailsTo:
+                {{ toYaml .observed.composite.resource.spec.publishConnectionDetailsTo | indent 4 }}
+            {{- end }}
+            {{- if .observed.composite.resource.spec.writeConnectionSecretsToNamespace }}
+              writeConnectionSecretsToNamespace: {{ .observed.composite.resource.spec.writeConnectionSecretsToNamespace }}
+            {{- end }}
+              forProvider:
+                region: {{ $spec.region }}
+                typeName: AWS::MediaConnect::Flow
+                desiredState: |-
+                  {
+                    "Name": "{{ $id }}",
+                    "Source": {{ toJson $spec.source }}
+                    {{- if $spec.availabilityZone }},
+                    "AvailabilityZone": "{{ $spec.availabilityZone }}"
+                    {{- end }}
+                    {{- if $spec.sourceFailoverConfig }},
+                    "SourceFailoverConfig": {{ toJson $spec.sourceFailoverConfig }}
+                    {{- end }}
+                    {{- if $spec.mediaStreams }},
+                    "MediaStreams": {{ toJson $spec.mediaStreams }}
+                    {{- end }}
+                    {{- if $spec.vpcInterfaces }},
+                    "VpcInterfaces": {{ toJson $spec.vpcInterfaces }}
+                    {{- end }}
+                    {{- if $spec.maintenance }},
+                    "Maintenance": {{ toJson $spec.maintenance }}
+                    {{- end }}
+                    {{- if $spec.tags }},
+                    "Tags": {{ toJson $spec.tags }}
+                    {{- end }}
+                  }
+
+            ---
+
+            {{ $awscc := getComposedResource . (printf "flow.mediaconnect.aws.livewyer.io/%s" $id) }}
+            apiVersion: {{ .observed.composite.resource.apiVersion }}
+            kind: {{ .observed.composite.resource.kind }}
+            metadata:
+              labels:
+                mediaconnect.aws.livewyer.io/flow: {{ $id }}
+            status:
+              atProvider: {{ toJson $awscc.status.atProvider }}
+
+    - step: automatically-detect-ready-composed-resources
+      functionRef:
+        name: function-auto-ready

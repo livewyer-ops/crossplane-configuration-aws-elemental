@@ -1,0 +1,76 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: gateway.mediaconnect.aws.livewyer.io
+spec:
+  compositeTypeRef:
+    apiVersion: mediaconnect.aws.livewyer.io/v1alpha1
+    kind: XGateway
+  mode: Pipeline
+  pipeline:
+    - step: go-templating
+      functionRef:
+        name: function-go-templating
+      input:
+        apiVersion: gotemplating.fn.crossplane.io/v1beta1
+        kind: GoTemplate
+        source: Inline
+        inline:
+          template: |
+            {{ $id := .observed.composite.resource.metadata.name -}}
+            {{ $spec := .observed.composite.resource.spec.parameters -}}
+
+            apiVersion: cloudcontrol.aws.upbound.io/v1beta1
+            kind: Resource
+            metadata:
+              name: {{ $id }}
+              annotations:
+                {{ setResourceNameAnnotation (printf "gateway.mediaconnect.aws.livewyer.io/%s" $id) }}
+              labels:
+                mediaconnect.aws.livewyer.io.livewyer.io/gateway: {{ $id }}
+            spec:
+            {{- if .observed.composite.resource.spec.providerConfigRef }}
+              providerConfigRef:
+            {{ toYaml .observed.composite.resource.spec.providerConfigRef | indent 4 }}
+            {{- end }}
+            {{- if .observed.composite.resource.spec.deletionPolicy }}
+              deletionPolicy: {{ .observed.composite.resource.spec.deletionPolicy }}
+            {{- end }}
+            {{- if .observed.composite.resource.spec.managementPolicies }}
+              managementPolicies:
+            {{ toYaml .observed.composite.resource.spec.managementPolicies | indent 4 }}
+            {{- end }}
+            {{- if .observed.composite.resource.spec.publishConnectionDetailsTo }}
+              publishConnectionDetailsTo:
+            {{ toYaml .observed.composite.resource.spec.publishConnectionDetailsTo | indent 4 }}
+            {{- end }}
+              {{- if .observed.composite.resource.spec.writeConnectionSecretsToNamespace }}
+              writeConnectionSecretsToNamespace: {{ .observed.composite.resource.spec.writeConnectionSecretsToNamespace }}
+            {{- end }}
+              forProvider:
+                typeName: AWS::MediaConnect::Gateway
+                region: {{ $spec.region }}
+                desiredState: |-
+                  {
+                    "Name": "{{ $id }}",
+                    "EgressCidrBlocks": {{ toJson $spec.egressCidrBlocks }},
+                    "Networks": {{ toJson $spec.networks }}
+                    {{- if $spec.tags }},
+                    "Tags": {{ toJson $spec.tags }}
+                    {{- end }}
+                  }
+
+            ---
+
+            {{ $awscc := getComposedResource . (printf "gateway.mediaconnect.aws.livewyer.io/%s" $id) }}
+            apiVersion: {{ .observed.composite.resource.apiVersion }}
+            kind: {{ .observed.composite.resource.kind }}
+            metadata:
+              labels:
+                mediaconnect.aws.livewyer.io/gateway: {{ $id }}
+            status:
+              atProvider: {{ toJson $awscc.status.atProvider }}
+
+    - step: automatically-detect-ready-composed-resources
+      functionRef:
+        name: function-auto-ready

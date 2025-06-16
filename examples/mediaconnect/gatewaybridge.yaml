@@ -1,0 +1,25 @@
+apiVersion: mediaconnect.aws.livewyer.io/v1alpha1
+kind: Bridge
+metadata:
+  name: gwb-test
+  labels:
+    mediaconnect.aws.livewyer.io/bridge: gwb-test
+spec:
+  providerConfigRef:
+    name: aws
+  parameters:
+    region: us-east-1
+    ingressGatewayBridge:
+      MaxOutputs: 2
+      MaxBitrate: 80000000
+    sources:
+      - NetworkSource:
+          Name: source
+          MulticastIp: 224.0.0.0
+          NetworkName: source
+          Port: 3000
+          Protocol: rtp
+    sourceFailoverConfig:
+      State: ENABLED
+      FailoverMode: FAILOVER
+    placementArn: ""

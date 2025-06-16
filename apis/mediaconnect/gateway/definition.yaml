@@ -1,0 +1,171 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: CompositeResourceDefinition
+metadata:
+  name: xgateways.mediaconnect.aws.livewyer.io
+spec:
+  group: mediaconnect.aws.livewyer.io
+  names:
+    kind: XGateway
+    plural: xgateways
+  claimNames:
+    kind: Gateway
+    plural: gateways
+  versions:
+    - name: v1alpha1
+      served: true
+      referenceable: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              properties:
+                parameters:
+                  type: object
+                  properties:
+                    egressCidrBlocks:
+                      type: array
+                      description: "The range of IP addresses that are allowed to contribute content or initiate output requests for flows communicating with this gateway. These IP addresses should be in the form of a Classless Inter-Domain Routing (CIDR) block; for example, 10.0.0.0/16."
+                      items:
+                        type: string
+                        pattern: "^([0-9]{1,3}\\.){3}[0-9]{1,3}/([0-9]|[1-2][0-9]|3[0-2])$"
+                      minItems: 1
+                    networks:
+                      type: array
+                      description: "The list of networks in the gateway."
+                      items:
+                        type: object
+                        properties:
+                          Name:
+                            type: string
+                            description: "The name of the network. This name is used to reference the network and must be unique among networks in this gateway."
+                          CidrBlock:
+                            type: string
+                            description: "A unique IP address range to use for this network. These IP addresses should be in the form of a Classless Inter-Domain Routing (CIDR) block; for example, 10.0.0.0/16."
+                            pattern: "^([0-9]{1,3}\\.){3}[0-9]{1,3}/([0-9]|[1-2][0-9]|3[0-2])$"
+                        required:
+                          - Name
+                          - CidrBlock
+                      minItems: 1
+                      maxItems: 4
+                    region:
+                      type: string
+                      description: "AWS region where the gateway will be created."
+                    tags:
+                      type: object
+                      description: "A map of tags to assign to the resource."
+                      additionalProperties:
+                        type: string
+                  required:
+                    - egressCidrBlocks
+                    - networks
+                deletionPolicy:
+                  type: string
+                  enum:
+                    - Delete
+                    - Orphan
+                  default: Delete
+                  description: "DeletionPolicy specifies what will happen to the underlying external when this managed resource is deleted."
+                managementPolicies:
+                  type: array
+                  items:
+                    type: string
+                    enum:
+                      - "*"
+                      - Create
+                      - Update
+                      - Delete
+                      - LateInitialize
+                      - Observe
+                  default: ["*"]
+                  description: "ManagementPolicies specify the array of actions Crossplane is allowed to take on the managed and external resources."
+                providerConfigRef:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                  required:
+                    - name
+                  description: "ProviderConfigReference specifies how the provider that will be used to create, observe, update, and delete this managed resource should be configured."
+                publishConnectionDetailsTo:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                    configRef:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                      required:
+                        - name
+                    metadata:
+                      type: object
+                      properties:
+                        labels:
+                          type: object
+                          additionalProperties:
+                            type: string
+                        annotations:
+                          type: object
+                          additionalProperties:
+                            type: string
+                        type:
+                          type: array
+                          items:
+                            type: string
+                  required:
+                    - name
+                  description: "PublishConnectionDetailsTo specifies the connection secret config which contains a name, metadata and a reference to secret store config to which any connection details for this managed resource should be written."
+                writeConnectionSecretsToNamespace:
+                  type: string
+                  description: "WriteConnectionSecretsToNamespace specifies the namespace in which the connection secrets of this managed resource should be written."
+              required:
+                - parameters
+            status:
+              type: object
+              properties:
+                conditions:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      lastTransitionTime:
+                        type: string
+                        format: date-time
+                      message:
+                        type: string
+                      reason:
+                        type: string
+                      status:
+                        type: string
+                      type:
+                        type: string
+                    required:
+                      - lastTransitionTime
+                      - reason
+                      - status
+                      - type
+                connectionDetails:
+                  type: object
+                  properties:
+                    lastPublishedTime:
+                      type: string
+                      format: date-time
+                atProvider:
+                  type: object
+                  description: "Porvider state."
+                  x-kubernetes-preserve-unknown-fields: true
+                state:
+                  type: string
+                  description: "The current state of the gateway. Possible values are: CREATING, ACTIVE, UPDATING, ERROR, DELETING, DELETED."
+                  enum:
+                    - CREATING
+                    - ACTIVE
+                    - UPDATING
+                    - ERROR
+                    - DELETING
+                    - DELETED
+          required:
+            - spec

@@ -1,0 +1,279 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: CompositeResourceDefinition
+metadata:
+  name: xmultiplexprograms.medialive.aws.livewyer.io
+spec:
+  group: medialive.aws.livewyer.io
+  names:
+    kind: XMultiplexProgram
+    plural: xmultiplexprograms
+  claimNames:
+    kind: MultiplexProgram
+    plural: multiplexprograms
+  versions:
+    - name: v1alpha1
+      served: true
+      referenceable: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              properties:
+                parameters:
+                  type: object
+                  properties:
+                    multiplexId:
+                      type: string
+                      description: "The unique ID of the multiplex."
+                    programName:
+                      type: string
+                      description: "The name of the multiplex program."
+                    multiplexProgramSettings:
+                      type: object
+                      description: "Multiplex Program settings configuration."
+                      properties:
+                        PreferredChannelPipeline:
+                          type: string
+                          description: "Indicates which pipeline is preferred by the multiplex for program ingest."
+                          enum:
+                            - "CURRENTLY_ACTIVE"
+                            - "PIPELINE_0"
+                            - "PIPELINE_1"
+                        ProgramNumber:
+                          type: integer
+                          description: "Unique program number."
+                          minimum: 0
+                          maximum: 65535
+                        ServiceDescriptor:
+                          type: object
+                          description: "Transport stream service descriptor configuration for the Multiplex program."
+                          properties:
+                            ProviderName:
+                              type: string
+                              description: "Name of the provider."
+                              minLength: 1
+                              maxLength: 256
+                            ServiceName:
+                              type: string
+                              description: "Name of the service."
+                              minLength: 1
+                              maxLength: 256
+                        VideoSettings:
+                          type: object
+                          description: "Program video settings configuration."
+                          properties:
+                            ConstantBitrate:
+                              type: integer
+                              description: "The constant bitrate configuration for the video encode."
+                              minimum: 100000
+                              maximum: 100000000
+                            StatmuxSettings:
+                              type: object
+                              description: "Statmux rate control settings."
+                              properties:
+                                MaximumBitrate:
+                                  type: integer
+                                  description: "Maximum statmux bitrate."
+                                  minimum: 100000
+                                  maximum: 100000000
+                                MinimumBitrate:
+                                  type: integer
+                                  description: "Minimum statmux bitrate."
+                                  minimum: 100000
+                                  maximum: 100000000
+                                Priority:
+                                  type: integer
+                                  description: "The priority value for the video stream."
+                                  minimum: -5
+                                  maximum: 5
+                          oneOf:
+                            - required: ["ConstantBitrate"]
+                            - required: ["StatmuxSettings"]
+                      required:
+                        - ProgramNumber
+                    packetIdentifiersMap:
+                      type: object
+                      description: "Packet identifiers map for the multiplex program."
+                      properties:
+                        AudioPids:
+                          type: array
+                          description: "Audio packet identifiers."
+                          items:
+                            type: integer
+                            minimum: 32
+                            maximum: 8190
+                        DvbSubPids:
+                          type: array
+                          description: "DVB subtitle packet identifiers."
+                          items:
+                            type: integer
+                        DvbTeletextPid:
+                          type: integer
+                          description: "DVB teletext packet identifier."
+                        EtvPlatformPid:
+                          type: integer
+                          description: "ETV platform packet identifier."
+                        EtvSignalPid:
+                          type: integer
+                          description: "ETV signal packet identifier."
+                        KlvDataPids:
+                          type: array
+                          description: "KLV data packet identifiers."
+                          items:
+                            type: integer
+                        PcrPid:
+                          type: integer
+                          description: "PCR packet identifier."
+                        PmtPid:
+                          type: integer
+                          description: "PMT packet identifier."
+                        PrivateMetadataPid:
+                          type: integer
+                          description: "Private metadata packet identifier."
+                        Scte27Pids:
+                          type: array
+                          description: "SCTE-27 packet identifiers."
+                          items:
+                            type: integer
+                        Scte35Pid:
+                          type: integer
+                          description: "SCTE-35 packet identifier."
+                        TimedMetadataPid:
+                          type: integer
+                          description: "Timed metadata packet identifier."
+                        VideoPid:
+                          type: integer
+                          description: "Video packet identifier."
+                    pipelineDetails:
+                      type: array
+                      description: "The current source for one of the pipelines in the multiplex."
+                      items:
+                        type: object
+                        properties:
+                          ActiveChannelPipeline:
+                            type: string
+                            description: "Identifies the channel pipeline that is currently active for the pipeline (identified by PipelineId) in the multiplex."
+                          PipelineId:
+                            type: string
+                            description: "Identifies a specific pipeline in the multiplex."
+                    preferredChannelPipeline:
+                      type: string
+                      description: "Indicates which pipeline is preferred by the multiplex for program ingest. If set to 'PIPELINE_0' or 'PIPELINE_1' and an unhealthy ingest causes the multiplex to switch to the non-preferred pipeline, it will switch back once that ingest is healthy again."
+                      enum:
+                        - "CURRENTLY_ACTIVE"
+                        - "PIPELINE_0"
+                        - "PIPELINE_1"
+                    region:
+                      type: string
+                      description: "AWS region where the multiplex program will be created."
+                      default: "us-east-1"
+                    tags:
+                      type: object
+                      description: "A map of tags to assign to the resource."
+                      additionalProperties:
+                        type: string
+                  required:
+                    - multiplexId
+                    - programName
+                deletionPolicy:
+                  type: string
+                  enum:
+                    - Delete
+                    - Orphan
+                  default: Delete
+                  description: "DeletionPolicy specifies what will happen to the underlying external when this managed resource is deleted."
+                managementPolicies:
+                  type: array
+                  items:
+                    type: string
+                    enum:
+                      - "*"
+                      - Create
+                      - Update
+                      - Delete
+                      - LateInitialize
+                      - Observe
+                  default: ["*"]
+                  description: "ManagementPolicies specify the array of actions Crossplane is allowed to take on the managed and external resources."
+                providerConfigRef:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                  required:
+                    - name
+                  description: "ProviderConfigReference specifies how the provider that will be used to create, observe, update, and delete this managed resource should be configured."
+                publishConnectionDetailsTo:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                    configRef:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                      required:
+                        - name
+                    metadata:
+                      type: object
+                      properties:
+                        labels:
+                          type: object
+                          additionalProperties:
+                            type: string
+                        annotations:
+                          type: object
+                          additionalProperties:
+                            type: string
+                        type:
+                          type: array
+                          items:
+                            type: string
+                  required:
+                    - name
+                  description: "PublishConnectionDetailsTo specifies the connection secret config which contains a name, metadata and a reference to secret store config to which any connection details for this managed resource should be written."
+                writeConnectionSecretsToNamespace:
+                  type: string
+                  description: "WriteConnectionSecretsToNamespace specifies the namespace in which the connection secrets of this managed resource should be written."
+              required:
+                - parameters
+              additionalProperties: false
+            status:
+              type: object
+              properties:
+                conditions:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      lastTransitionTime:
+                        type: string
+                        format: date-time
+                      message:
+                        type: string
+                      reason:
+                        type: string
+                      status:
+                        type: string
+                      type:
+                        type: string
+                    required:
+                      - lastTransitionTime
+                      - reason
+                      - status
+                      - type
+                connectionDetails:
+                  type: object
+                  properties:
+                    lastPublishedTime:
+                      type: string
+                      format: date-time
+                atProvider:
+                  type: object
+                  description: "Porvider state."
+                  x-kubernetes-preserve-unknown-fields: true
+          required:
+            - spec

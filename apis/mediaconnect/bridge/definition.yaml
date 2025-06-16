@@ -1,0 +1,308 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: CompositeResourceDefinition
+metadata:
+  name: xbridges.mediaconnect.aws.livewyer.io
+spec:
+  group: mediaconnect.aws.livewyer.io
+  names:
+    kind: XBridge
+    plural: xbridges
+  claimNames:
+    kind: Bridge
+    plural: bridges
+  versions:
+    - name: v1alpha1
+      served: true
+      referenceable: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              properties:
+                parameters:
+                  type: object
+                  properties:
+                    placementArn:
+                      type: string
+                      description: "The bridge placement Amazon Resource Number (ARN)."
+                    sources:
+                      type: array
+                      description: "The sources that you want to add to this bridge."
+                      items:
+                        type: object
+                        properties:
+                          FlowSource:
+                            type: object
+                            description: "The source of the bridge. A flow source originates in MediaConnect as an existing cloud flow."
+                            properties:
+                              FlowArn:
+                                type: string
+                                description: "The ARN of the cloud flow used as a source of this bridge."
+                              Name:
+                                type: string
+                                description: "The name of the flow source."
+                              FlowVpcInterfaceAttachment:
+                                type: object
+                                description: "The name of the VPC interface attachment to use for this source."
+                                properties:
+                                  VpcInterfaceName:
+                                    type: string
+                                    description: "The name of the VPC interface."
+                                required:
+                                  - VpcInterfaceName
+                            required:
+                              - FlowArn
+                              - Name
+                          NetworkSource:
+                            type: object
+                            description: "The source of the bridge. A network source originates at your premises."
+                            properties:
+                              MulticastIp:
+                                type: string
+                                description: "The network source multicast IP."
+                              Name:
+                                type: string
+                                description: "The name of the network source."
+                              NetworkName:
+                                type: string
+                                description: "The network source's gateway network name."
+                              Port:
+                                type: integer
+                                description: "The network source port."
+                                minimum: 1
+                                maximum: 65535
+                              Protocol:
+                                type: string
+                                description: "The network source protocol."
+                                enum:
+                                  - "rtp-fec"
+                                  - "rtp"
+                                  - "udp"
+                            required:
+                              - MulticastIp
+                              - Name
+                              - NetworkName
+                              - Port
+                              - Protocol
+                        oneOf:
+                          - required: ["FlowSource"]
+                          - required: ["NetworkSource"]
+                      minItems: 0
+                      maxItems: 2
+                    outputs:
+                      type: array
+                      description: "The outputs that you want to add to this bridge."
+                      items:
+                        type: object
+                        properties:
+                          Name:
+                            type: string
+                            description: "The network output name. This name is used to reference the output and must be unique among outputs in this bridge."
+                          NetworkOutput:
+                            type: object
+                            description: "The network output of the bridge. A network output is delivered to your premises."
+                            properties:
+                              IpAddress:
+                                type: string
+                                description: "The network output IP address."
+                              Name:
+                                type: string
+                                description: "The network output name."
+                              NetworkName:
+                                type: string
+                                description: "The network output's gateway network name."
+                              Port:
+                                type: integer
+                                description: "The network output's port."
+                                minimum: 1
+                                maximum: 65535
+                              Protocol:
+                                type: string
+                                description: "The network output protocol."
+                                enum:
+                                  - "rtp-fec"
+                                  - "rtp"
+                                  - "udp"
+                              Ttl:
+                                type: integer
+                                description: "The network output TTL."
+                                minimum: 1
+                                maximum: 255
+                            required:
+                              - IpAddress
+                              - Name
+                              - NetworkName
+                              - Port
+                              - Protocol
+                              - Ttl
+                        required:
+                          - Name
+                          - NetworkOutput
+                      minItems: 0
+                      maxItems: 2
+                    egressGatewayBridge:
+                      type: object
+                      description: "An egress bridge is a cloud-to-ground bridge. The content comes from an existing MediaConnect flow and is delivered to your premises."
+                      properties:
+                        MaxBitrate:
+                          type: integer
+                          description: "The maximum expected bitrate (in bps) of the egress bridge."
+                          minimum: 1
+                      required:
+                        - MaxBitrate
+                    ingressGatewayBridge:
+                      type: object
+                      description: "An ingress bridge is a ground-to-cloud bridge. The content originates at your premises and is delivered to the cloud."
+                      properties:
+                        MaxBitrate:
+                          type: integer
+                          description: "The maximum expected bitrate (in bps) of the ingress bridge."
+                          minimum: 1
+                        MaxOutputs:
+                          type: integer
+                          description: "The maximum number of outputs on the ingress bridge."
+                          minimum: 1
+                      required:
+                        - MaxBitrate
+                        - MaxOutputs
+                    sourceFailoverConfig:
+                      type: object
+                      description: "The settings for source failover."
+                      properties:
+                        FailoverMode:
+                          type: string
+                          description: "The type of failover you choose for this flow. FAILOVER allows switching between different streams."
+                          enum:
+                            - "FAILOVER"
+                        State:
+                          type: string
+                          description: "The state of source failover on the flow. If the state is inactive, the flow can have only one source. If the state is active, the flow can have one or two sources."
+                          enum:
+                            - "ENABLED"
+                            - "DISABLED"
+                        SourcePriority:
+                          type: object
+                          description: "The priority you want to assign to a source. You can have a primary stream and a backup stream or two equally prioritized streams."
+                          properties:
+                            PrimarySource:
+                              type: string
+                              description: "The name of the source you choose as the primary source for this flow."
+                            RecoveryWindow:
+                              type: integer
+                              description: "The size of the buffer (in milliseconds) to use to sync incoming source data."
+                              minimum: 100
+                              maximum: 15000
+                      required:
+                        - FailoverMode
+                    region:
+                      type: string
+                      description: "AWS region where the bridge will be created."
+                    tags:
+                      type: object
+                      description: "Key-value pairs to associate with the bridge."
+                      additionalProperties:
+                        type: string
+                  required:
+                    - placementArn
+                    - sources
+                deletionPolicy:
+                  type: string
+                  enum:
+                    - Delete
+                    - Orphan
+                  default: Delete
+                  description: "DeletionPolicy specifies what will happen to the underlying external when this managed resource is deleted."
+                managementPolicies:
+                  type: array
+                  items:
+                    type: string
+                    enum:
+                      - "*"
+                      - Create
+                      - Update
+                      - Delete
+                      - LateInitialize
+                      - Observe
+                  default: ["*"]
+                  description: "ManagementPolicies specify the array of actions Crossplane is allowed to take on the managed and external resources."
+                providerConfigRef:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                  required:
+                    - name
+                  description: "ProviderConfigReference specifies how the provider that will be used to create, observe, update, and delete this managed resource should be configured."
+                publishConnectionDetailsTo:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                    configRef:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                      required:
+                        - name
+                    metadata:
+                      type: object
+                      properties:
+                        labels:
+                          type: object
+                          additionalProperties:
+                            type: string
+                        annotations:
+                          type: object
+                          additionalProperties:
+                            type: string
+                        type:
+                          type: array
+                          items:
+                            type: string
+                  required:
+                    - name
+                  description: "PublishConnectionDetailsTo specifies the connection secret config which contains a name, metadata and a reference to secret store config to which any connection details for this managed resource should be written."
+                writeConnectionSecretsToNamespace:
+                  type: string
+                  description: "WriteConnectionSecretsToNamespace specifies the namespace in which the connection secrets of this managed resource should be written."
+              required:
+                - parameters
+            status:
+              type: object
+              properties:
+                conditions:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      lastTransitionTime:
+                        type: string
+                        format: date-time
+                      message:
+                        type: string
+                      reason:
+                        type: string
+                      status:
+                        type: string
+                      type:
+                        type: string
+                    required:
+                      - lastTransitionTime
+                      - reason
+                      - status
+                      - type
+                connectionDetails:
+                  type: object
+                  properties:
+                    lastPublishedTime:
+                      type: string
+                      format: date-time
+                atProvider:
+                  type: object
+                  description: "Porvider state."
+                  x-kubernetes-preserve-unknown-fields: true
+          required:
+            - spec
