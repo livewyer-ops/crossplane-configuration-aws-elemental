@@ -1,0 +1,14 @@
+apiVersion: mediaconnect.aws.livewyer.io/v1alpha1
+kind: Gateway
+metadata:
+  name: test
+spec:
+  providerConfigRef:
+    name: aws
+  parameters:
+    region: us-east-1
+    egressCidrBlocks:
+      - 88.98.197.180/32
+    networks:
+      - Name: home
+        CidrBlock: 88.98.197.180/32
