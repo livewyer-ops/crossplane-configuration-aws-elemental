@@ -153,9 +153,10 @@ spec:
                     lastPublishedTime:
                       type: string
                       format: date-time
-                arn:
-                  type: string
-                  description: "The Amazon Resource Name (ARN) of the gateway."
+                atProvider:
+                  type: object
+                  description: "Porvider state."
+                  x-kubernetes-preserve-unknown-fields: true
                 state:
                   type: string
                   description: "The current state of the gateway. Possible values are: CREATING, ACTIVE, UPDATING, ERROR, DELETING, DELETED."
@@ -168,19 +169,3 @@ spec:
                     - DELETED
           required:
             - spec
-      additionalPrinterColumns:
-        - name: READY
-          type: string
-          jsonPath: ".status.conditions[?(@.type=='Ready')].status"
-        - name: SYNCED
-          type: string
-          jsonPath: ".status.conditions[?(@.type=='Synced')].status"
-        - name: EXTERNAL-NAME
-          type: string
-          jsonPath: ".metadata.annotations.crossplane\\.io/external-name"
-        - name: STATE
-          type: string
-          jsonPath: ".status.gatewayState"
-        - name: AGE
-          type: date
-          jsonPath: ".metadata.creationTimestamp"
