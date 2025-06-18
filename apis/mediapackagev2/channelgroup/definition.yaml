@@ -1,7 +1,7 @@
 apiVersion: apiextensions.crossplane.io/v1
 kind: CompositeResourceDefinition
 metadata:
-  name: xchannelgroup.mediapackagev2.aws.livewyer.io
+  name: xchannelgroups.mediapackagev2.aws.livewyer.io
 spec:
   group: mediapackagev2.aws.livewyer.io
   names:
@@ -38,7 +38,6 @@ spec:
                     region:
                       type: string
                       description: "AWS region where the channel group will be created."
-                      default: "us-east-1"
                     tags:
                       type: object
                       description: "A map of tags to assign to the resource."
@@ -46,7 +45,6 @@ spec:
                         type: string
                   required:
                     - channelGroupName
-                  additionalProperties: false
                 deletionPolicy:
                   type: string
                   enum:
@@ -110,7 +108,6 @@ spec:
                   description: "WriteConnectionSecretsToNamespace specifies the namespace in which the connection secrets of this managed resource should be written."
               required:
                 - parameters
-              additionalProperties: false
             status:
               type: object
               properties:
@@ -141,35 +138,9 @@ spec:
                     lastPublishedTime:
                       type: string
                       format: date-time
-                arn:
-                  type: string
-                  description: "The Amazon Resource Name (ARN) of the channel group."
-                createdAt:
-                  type: string
-                  description: "The timestamp of the creation of the channel group."
-                  format: date-time
-                modifiedAt:
-                  type: string
-                  description: "The timestamp of the modification of the channel group."
-                  format: date-time
-                egressDomain:
-                  type: string
-                  description: "The egress domain of the channel group."
+                atProvider:
+                  type: object
+                  description: "Porvider state."
+                  x-kubernetes-preserve-unknown-fields: true
           required:
             - spec
-      additionalPrinterColumns:
-        - name: READY
-          type: string
-          jsonPath: ".status.conditions[?(@.type=='Ready')].status"
-        - name: SYNCED
-          type: string
-          jsonPath: ".status.conditions[?(@.type=='Synced')].status"
-        - name: EXTERNAL-NAME
-          type: string
-          jsonPath: ".metadata.annotations.crossplane\\.io/external-name"
-        - name: EGRESS-DOMAIN
-          type: string
-          jsonPath: ".status.egressDomain"
-        - name: AGE
-          type: date
-          jsonPath: ".metadata.creationTimestamp"

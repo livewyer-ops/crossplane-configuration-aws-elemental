@@ -1,11 +1,11 @@
 apiVersion: apiextensions.crossplane.io/v1
 kind: Composition
 metadata:
-  name: multiplexprogram.medialive.aws.livewyer.io
+  name: channelgroup.mediapackagev2.aws.livewyer.io
 spec:
   compositeTypeRef:
-    apiVersion: medialive.aws.livewyer.io/v1alpha1
-    kind: XMultiplexProgram
+    apiVersion: mediapackagev2.aws.livewyer.io/v1alpha1
+    kind: XChannelGroup
   mode: Pipeline
   pipeline:
     - step: go-templating
@@ -25,9 +25,9 @@ spec:
             metadata:
               name: {{ $id }}
               annotations:
-                {{ setResourceNameAnnotation (printf "multiplexprogram.medialive.aws.livewyer.io/%s" $id) }}
+                {{ setResourceNameAnnotation (printf "channelgroup.mediapackagev2.aws.livewyer.io/%s" $id) }}
               labels:
-                medialive.aws.livewyer.io/multiplexprogram: {{ $id }}
+                mediapackagev2.aws.livewyer.io/channelgroup: {{ $id }}
             spec:
               {{- if .observed.composite.resource.spec.providerConfigRef }}
               providerConfigRef:
@@ -48,23 +48,13 @@ spec:
               writeConnectionSecretsToNamespace: {{ .observed.composite.resource.spec.writeConnectionSecretsToNamespace }}
               {{- end }}
               forProvider:
-                typeName: AWS::MediaLive::Multiplexprogram
+                typeName: AWS::MediaPackageV2::ChannelGroup
                 region: {{ $spec.region }}
                 desiredState: |-
                   {
-                    "MultiplexId": "{{ $spec.multiplexId }}",
-                    "ProgramName": "{{ $spec.programName }}"
-                    {{- if $spec.multiplexProgramSettings }},
-                    "MultiplexProgramSettings": {{ toJson $spec.multiplexProgramSettings }}
-                    {{- end }}
-                    {{- if $spec.packetIdentifiersMap }},
-                    "PacketIdentifiersMap": {{ toJson $spec.packetIdentifiersMap }}
-                    {{- end }}
-                    {{- if $spec.pipelineDetails }},
-                    "PipelineDetails": {{ toJson $spec.pipelineDetails }}
-                    {{- end }}
-                    {{- if $spec.preferredChannelPipeline }},
-                    "PreferredChannelPipeline": "{{ $spec.preferredChannelPipeline }}"
+                    "ChannelGroupName": "{{ $spec.channelGroupName }}"
+                    {{- if $spec.description }},
+                    "Description": "{{ $spec.description }}"
                     {{- end }}
                     {{- if $spec.tags }},
                     "Tags": {{ toJson $spec.tags }}
@@ -73,12 +63,12 @@ spec:
 
             ---
 
-            {{ $awscc := getComposedResource . (printf "multiplexprogram.medialive.aws.livewyer.io/%s" $id) }}
+            {{ $awscc := getComposedResource . (printf "channelgroup.mediapackagev2.aws.livewyer.io/%s" $id) }}
             apiVersion: {{ .observed.composite.resource.apiVersion }}
             kind: {{ .observed.composite.resource.kind }}
             metadata:
               labels:
-                medialive.aws.livewyer.io/multiplexprogram: {{ $id }}
+                mediapackagev2.aws.livewyer.io/channelgroup: {{ $id }}
             status:
               atProvider: {{ toJson $awscc.status.atProvider }}
 

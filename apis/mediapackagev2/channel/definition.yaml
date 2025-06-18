@@ -1,7 +1,7 @@
 apiVersion: apiextensions.crossplane.io/v1
 kind: CompositeResourceDefinition
 metadata:
-  name: xchannel.mediapackagev2.aws.livewyer.io
+  name: xchannels.mediapackagev2.aws.livewyer.io
 spec:
   group: mediapackagev2.aws.livewyer.io
   names:
@@ -30,12 +30,6 @@ spec:
                       pattern: "^[a-zA-Z0-9_-]+$"
                       minLength: 1
                       maxLength: 256
-                    channelName:
-                      type: string
-                      description: "The name of the channel."
-                      pattern: "^[a-zA-Z0-9_-]+$"
-                      minLength: 1
-                      maxLength: 256
                     description:
                       type: string
                       description: "The description of the channel."
@@ -52,27 +46,19 @@ spec:
                       type: object
                       description: "The configuration for input switching based on the media quality confidence score (MQCS) as provided from AWS Elemental MediaLive."
                       properties:
-                        inputSwitchEnabled:
+                        MQCSInputSwitching:
                           type: boolean
-                          description: "When enabled, MediaPackage will switch inputs based on the media quality confidence score."
-                        maximumInputSwitchDelaySeconds:
-                          type: integer
-                          description: "The maximum delay (in seconds) for input switching."
-                          minimum: 1
-                          maximum: 30
-                      additionalProperties: false
+                          description: "When true, AWS Elemental MediaPackage performs input switching based on the MQCS. Default is true. This setting is valid only when InputType is CMAF."
                     outputHeaderConfiguration:
                       type: object
                       description: "The settings for what common media server data (CMSD) headers AWS Elemental MediaPackage includes in responses to the CDN."
                       properties:
-                        publishMqcs:
+                        PublishMQCS:
                           type: boolean
                           description: "When true, AWS Elemental MediaPackage includes the MQCS in responses to the CDN. This setting is valid only when InputType is CMAF."
-                      additionalProperties: false
                     region:
                       type: string
                       description: "AWS region where the channel will be created."
-                      default: "us-east-1"
                     tags:
                       type: object
                       description: "A map of tags to assign to the resource."
@@ -80,8 +66,6 @@ spec:
                         type: string
                   required:
                     - channelGroupName
-                    - channelName
-                  additionalProperties: false
                 deletionPolicy:
                   type: string
                   enum:
@@ -145,7 +129,6 @@ spec:
                   description: "WriteConnectionSecretsToNamespace specifies the namespace in which the connection secrets of this managed resource should be written."
               required:
                 - parameters
-              additionalProperties: false
             status:
               type: object
               properties:
@@ -176,53 +159,9 @@ spec:
                     lastPublishedTime:
                       type: string
                       format: date-time
-                arn:
-                  type: string
-                  description: "The Amazon Resource Name (ARN) of the channel."
-                createdAt:
-                  type: string
-                  description: "The timestamp of the creation of the channel."
-                  format: date-time
-                modifiedAt:
-                  type: string
-                  description: "The timestamp of the modification of the channel."
-                  format: date-time
-                ingestEndpoints:
-                  type: array
-                  description: "The ingest endpoints associated with the channel."
-                  items:
-                    type: object
-                    properties:
-                      id:
-                        type: string
-                        description: "The system generated unique identifier for the ingest endpoint."
-                      url:
-                        type: string
-                        description: "The ingest URL to which the source stream should be sent."
-                    additionalProperties: false
-                ingestEndpointUrls:
-                  type: array
-                  description: "The ingest endpoint URLs for the channel."
-                  items:
-                    type: string
+                atProvider:
+                  type: object
+                  description: "Porvider state."
+                  x-kubernetes-preserve-unknown-fields: true
           required:
             - spec
-      additionalPrinterColumns:
-        - name: READY
-          type: string
-          jsonPath: ".status.conditions[?(@.type=='Ready')].status"
-        - name: SYNCED
-          type: string
-          jsonPath: ".status.conditions[?(@.type=='Synced')].status"
-        - name: EXTERNAL-NAME
-          type: string
-          jsonPath: ".metadata.annotations.crossplane\\.io/external-name"
-        - name: CHANNEL-GROUP
-          type: string
-          jsonPath: ".spec.parameters.channelGroupName"
-        - name: INPUT-TYPE
-          type: string
-          jsonPath: ".spec.parameters.inputType"
-        - name: AGE
-          type: date
-          jsonPath: ".metadata.creationTimestamp"
