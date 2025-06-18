@@ -1,7 +1,7 @@
 apiVersion: apiextensions.crossplane.io/v1
 kind: CompositeResourceDefinition
 metadata:
-  name: xoriginendpoint.mediapackage.aws.livewyer.io
+  name: xoriginendpoints.mediapackage.aws.livewyer.io
 spec:
   group: mediapackage.aws.livewyer.io
   names:
@@ -24,9 +24,6 @@ spec:
                 parameters:
                   type: object
                   properties:
-                    id:
-                      type: string
-                      description: "A unique identifier for the OriginEndpoint."
                     channelId:
                       type: string
                       description: "The ID of the Channel the OriginEndpoint is associated with."
@@ -60,93 +57,185 @@ spec:
                       type: object
                       description: "Parameters for CDN authorization."
                       properties:
-                        cdnIdentifierSecret:
+                        CdnIdentifierSecret:
                           type: string
                           description: "The Amazon Resource Name (ARN) for the secret in Secrets Manager that your Content Delivery Network (CDN) uses for authorization to access your endpoint."
-                        secretsRoleArn:
+                        SecretsRoleArn:
                           type: string
                           description: "The Amazon Resource Name (ARN) for the IAM role that allows MediaPackage to communicate with AWS Secrets Manager."
                       required:
-                        - cdnIdentifierSecret
-                        - secretsRoleArn
-                      additionalProperties: false
+                        - CdnIdentifierSecret
+                        - SecretsRoleArn
                     cmafPackage:
                       type: object
                       description: "A Common Media Application Format (CMAF) packaging configuration."
                       properties:
-                        encryption:
+                        Encryption:
                           type: object
                           description: "A Common Media Application Format (CMAF) encryption configuration."
                           properties:
-                            keyRotationIntervalSeconds:
+                            ConstantInitializationVector:
+                              type: string
+                              description: "An optional 128-bit, 16-byte hex value represented by a 32-character string, used in conjunction with the key for encrypting blocks. If you don't specify a value, then AWS Elemental MediaPackage creates the constant initialization vector (IV)."
+                              pattren: ^"\A[0-9a-fA-F]+\Z$"
+                            EncryptionMethod:
+                              type: string
+                              description: "The encryption method to use."
+                              enum:
+                                - "SAMPLE_AES"
+                                - "AES_CTR"
+                            KeyRotationIntervalSeconds:
                               type: integer
                               description: "Time (in seconds) between each encryption key rotation."
                               minimum: 1
-                            spekeKeyProvider:
+                            SpekeKeyProvider:
                               type: object
                               description: "A configuration for accessing an external Secure Packager and Encoder Key Exchange (SPEKE) service that will provide encryption keys."
-                              additionalProperties: true
-                          additionalProperties: false
-                        hlsManifests:
+                              properties:
+                                CertificateArn:
+                                  type: string
+                                  description: "The Amazon Resource Name (ARN) for the certificate that you imported to AWS Certificate Manager to add content key encryption to this endpoint. For this feature to work, your DRM key provider must support content key encryption."
+                                EncryptionContractConfiguration:
+                                  type: object
+                                  description: "Use encryptionContractConfiguration to configure one or more content encryption keys for your endpoints that use SPEKE Version 2.0. The encryption contract defines which content keys are used to encrypt the audio and video tracks in your stream. To configure the encryption contract, specify which audio and video encryption presets to use."
+                                  properties:
+                                    PresetSpeke20Audio:
+                                      type: string
+                                      description: "A collection of audio encryption presets."
+                                      enum:
+                                        - "PRESET-AUDIO-1"
+                                        - "PRESET-AUDIO-2"
+                                        - "PRESET-AUDIO-3"
+                                        - "SHARED"
+                                        - "UNENCRYPTED"
+                                    PresetSpeke20Video:
+                                      type: string
+                                      description: "A collection of video encryption presets."
+                                      enum:
+                                        - "PRESET-VIDEO-1"
+                                        - "PRESET-VIDEO-2"
+                                        - "PRESET-VIDEO-3"
+                                        - "PRESET-VIDEO-4"
+                                        - "PRESET-VIDEO-5"
+                                        - "PRESET-VIDEO-6"
+                                        - "PRESET-VIDEO-7"
+                                        - "PRESET-VIDEO-8"
+                                        - "SHARED"
+                                        - "UNENCRYPTED"
+                                  required:
+                                    - PresetSpeke20Audio
+                                    - PresetSpeke20Video
+                                ResourceId:
+                                  type: string
+                                  description: Unique identifier for this endpoint, as it is configured in the key provider service.
+                                RoleArn:
+                                  type: string
+                                  description: "The ARN for the IAM role that's granted by the key provider to provide access to the key provider API. This role must have a trust policy that allows AWS Elemental MediaPackage to assume the role, and it must have a sufficient permissions policy to allow access to the specific key retrieval URL. Valid format: arn:aws:iam::{accountID}:role/{name}"
+                                SystemIds:
+                                  type: array
+                                  description: "List of unique identifiers for the DRM systems to use, as defined in the CPIX specification."
+                                  items:
+                                    type: string
+                                Url:
+                                  type: string
+                                  description: "URL for the key provider’s key retrieval API endpoint. Must start with https://."
+                              required:
+                                - ResourceId
+                                - RoleArn
+                                - SystemIds
+                                - Url
+                          required:
+                            - SpekeKeyProvider
+                        HlsManifests:
                           type: array
                           description: "A list of HLS manifest configurations."
                           items:
                             type: object
                             properties:
-                              id:
+                              Id:
                                 type: string
                                 description: "The ID of the manifest."
-                              manifestName:
+                              AdMarkers:
+                                type: string
+                                description: "Controls how ad markers are included in the packaged endpoint."
+                                enum:
+                                  - "NONE"
+                                  - "PASSTHROUGH"
+                                  - "SCTE35_ENHANCED"
+                                  - "DATERANGE"
+                              AdsOnDeliveryRestrictions:
+                                type: string
+                                description: "The flags on SCTE-35 segmentation descriptors that have to be present for AWS Elemental MediaPackage to insert ad markers in the output manifest. For information about SCTE-35 in AWS Elemental MediaPackage, see SCTE-35 Message Options in AWS Elemental MediaPackage."
+                                enum:
+                                  - "NONE"
+                                  - "RESTRICTED"
+                                  - "UNRESTRICTED"
+                                  - "BOTH"
+                              AdTriggers:
+                                type: string
+                                description: "Specifies the SCTE-35 message types that AWS Elemental MediaPackage treats as ad markers in the output manifest."
+                                enum:
+                                  - "SPLICE_INSERT"
+                                  - "BREAK"
+                                  - "PROVIDER_ADVERTISEMENT"
+                                  - "DISTRIBUTOR_ADVERTISEMENT"
+                                  - "PROVIDER_PLACEMENT_OPPORTUNITY"
+                                  - "DISTRIBUTOR_PLACEMENT_OPPORTUNITY"
+                                  - "PROVIDER_OVERLAY_PLACEMENT_OPPORTUNITY"
+                                  - "DISTRIBUTOR_OVERLAY_PLACEMENT_OPPORTUNITY"
+                              IncludeIframeOnlyStream:
+                                type: boolean
+                                description: "Applies to stream sets with a single video track only. When true, the stream set includes an additional I-frame only stream, along with the other tracks. If false, this extra stream is not included."
+                              ProgramDateTimeIntervalSeconds:
+                                type: integer
+                                description: "Inserts EXT-X-PROGRAM-DATE-TIME tags in the output manifest at the interval that you specify."
+                              Url:
+                                type: string
+                                description: "The URL that's used to request this manifest from this endpoint."
+                              ManifestName:
                                 type: string
                                 description: "An optional short string appended to the end of the OriginEndpoint URL."
-                              playlistType:
+                              PlaylistType:
                                 type: string
                                 description: "The HTTP Live Streaming (HLS) playlist type."
                                 enum:
                                   - "NONE"
                                   - "EVENT"
                                   - "VOD"
-                              playlistWindowSeconds:
+                              PlaylistWindowSeconds:
                                 type: integer
                                 description: "The total duration (in seconds) of each playlist."
                                 minimum: 1
                             required:
-                              - id
-                            additionalProperties: false
-                        segmentDurationSeconds:
+                              - Id
+                        SegmentDurationSeconds:
                           type: integer
                           description: "Duration (in seconds) of each segment."
-                          minimum: 1
-                          maximum: 30
-                        segmentPrefix:
+                        SegmentPrefix:
                           type: string
                           description: "An optional custom string that is prepended to the name of each segment."
-                        streamSelection:
+                        StreamSelection:
                           type: object
                           description: "A StreamSelection configuration."
                           properties:
-                            maxVideoBitsPerSecond:
+                            MaxVideoBitsPerSecond:
                               type: integer
                               description: "The maximum video bitrate (bps) to include in output."
-                              minimum: 1
-                            minVideoBitsPerSecond:
+                            MinVideoBitsPerSecond:
                               type: integer
                               description: "The minimum video bitrate (bps) to include in output."
-                              minimum: 1
-                            streamOrder:
+                            StreamOrder:
                               type: string
                               description: "A directive that determines the order of streams in the output."
                               enum:
                                 - "ORIGINAL"
                                 - "VIDEO_BITRATE_ASCENDING"
                                 - "VIDEO_BITRATE_DESCENDING"
-                          additionalProperties: false
-                      additionalProperties: false
                     dashPackage:
                       type: object
                       description: "A Dynamic Adaptive Streaming over HTTP (DASH) packaging configuration."
                       properties:
-                        adsOnDeliveryRestrictions:
+                        AdsOnDeliveryRestrictions:
                           type: string
                           description: "The flags on SCTE-35 segmentation descriptors that have to be present for AWS Elemental MediaPackage to insert ad markers in the output manifest."
                           enum:
@@ -154,7 +243,7 @@ spec:
                             - "RESTRICTED"
                             - "UNRESTRICTED"
                             - "BOTH"
-                        adTriggers:
+                        AdTriggers:
                           type: array
                           description: "Specifies the SCTE-35 message types that AWS Elemental MediaPackage treats as ad markers in the output manifest."
                           items:
@@ -168,63 +257,138 @@ spec:
                               - "DISTRIBUTOR_PLACEMENT_OPPORTUNITY"
                               - "PROVIDER_OVERLAY_PLACEMENT_OPPORTUNITY"
                               - "DISTRIBUTOR_OVERLAY_PLACEMENT_OPPORTUNITY"
-                        encryption:
+                        Encryption:
                           type: object
                           description: "A Dynamic Adaptive Streaming over HTTP (DASH) encryption configuration."
-                          additionalProperties: true
-                        includeIframeOnlyStream:
+                          properties:
+                            KeyRotationIntervalSeconds:
+                              type: integer
+                              description: "Number of seconds before AWS Elemental MediaPackage rotates to a new key. By default, rotation is set to 60 seconds. Set to 0 to disable key rotation."
+                            SpekeKeyProvider:
+                              type: object
+                              description: "Parameters for the SPEKE key provider."
+                              properties:
+                                CertificateArn:
+                                  type: string
+                                  description: "The Amazon Resource Name (ARN) for the certificate that you imported to AWS Certificate Manager to add content key encryption to this endpoint. For this feature to work, your DRM key provider must support content key encryption."
+                                EncryptionContractConfiguration:
+                                  type: object
+                                  description: "Use encryptionContractConfiguration to configure one or more content encryption keys for your endpoints that use SPEKE Version 2.0. The encryption contract defines which content keys are used to encrypt the audio and video tracks in your stream. To configure the encryption contract, specify which audio and video encryption presets to use."
+                                  properties:
+                                    PresetSpeke20Audio:
+                                      type: string
+                                      description: "A collection of audio encryption presets."
+                                      enum:
+                                        - "PRESET-AUDIO-1"
+                                        - "PRESET-AUDIO-2"
+                                        - "PRESET-AUDIO-3"
+                                        - "SHARED"
+                                        - "UNENCRYPTED"
+                                    PresetSpeke20Video:
+                                      type: string
+                                      description: "A collection of video encryption presets."
+                                      enum:
+                                        - "PRESET-VIDEO-1"
+                                        - "PRESET-VIDEO-2"
+                                        - "PRESET-VIDEO-3"
+                                        - "PRESET-VIDEO-4"
+                                        - "PRESET-VIDEO-5"
+                                        - "PRESET-VIDEO-6"
+                                        - "PRESET-VIDEO-7"
+                                        - "PRESET-VIDEO-8"
+                                        - "SHARED"
+                                        - "UNENCRYPTED"
+                                  required:
+                                    - PresetSpeke20Audio
+                                    - PresetSpeke20Video
+                                ResourceId:
+                                  type: string
+                                  description: Unique identifier for this endpoint, as it is configured in the key provider service.
+                                RoleArn:
+                                  type: string
+                                  description: "The ARN for the IAM role that's granted by the key provider to provide access to the key provider API. This role must have a trust policy that allows AWS Elemental MediaPackage to assume the role, and it must have a sufficient permissions policy to allow access to the specific key retrieval URL. Valid format: arn:aws:iam::{accountID}:role/{name}"
+                                SystemIds:
+                                  type: array
+                                  description: "List of unique identifiers for the DRM systems to use, as defined in the CPIX specification."
+                                  items:
+                                    type: string
+                                Url:
+                                  type: string
+                                  description: "URL for the key provider’s key retrieval API endpoint. Must start with https://."
+                              required:
+                                - ResourceId
+                                - RoleArn
+                                - SystemIds
+                                - Url
+                          required:
+                            - SpekeKeyProvider
+                          required:
+                            - SpekeKeyProvider
+                        IncludeIframeOnlyStream:
                           type: boolean
                           description: "When enabled, an I-Frame only stream will be included in the output."
-                        manifestLayout:
+                        ManifestLayout:
                           type: string
                           description: "Determines the position of some tags in the Media Presentation Description (MPD)."
                           enum:
                             - "FULL"
                             - "COMPACT"
-                        manifestWindowSeconds:
+                        ManifestWindowSeconds:
                           type: integer
                           description: "Time window (in seconds) contained in each manifest."
-                          minimum: 1
-                        minBufferTimeSeconds:
+                        MinBufferTimeSeconds:
                           type: integer
                           description: "Minimum duration (in seconds) that a player will buffer media before starting playback."
-                          minimum: 1
-                        minUpdatePeriodSeconds:
+                        MinUpdatePeriodSeconds:
                           type: integer
                           description: "Minimum duration (in seconds) between potential changes to the Dynamic Adaptive Streaming over HTTP (DASH) Media Presentation Description (MPD)."
-                          minimum: 1
-                        periodTriggers:
+                        PeriodTriggers:
                           type: array
                           description: "A list of triggers that controls when the outgoing Dynamic Adaptive Streaming over HTTP (DASH) Media Presentation Description (MPD) will be partitioned into multiple periods."
                           items:
                             type: string
-                        profile:
+                            enum:
+                              - ""
+                              - "ADS"
+                        Profile:
                           type: string
                           description: "The Dynamic Adaptive Streaming over HTTP (DASH) profile type."
                           enum:
                             - "NONE"
                             - "HBBTV_1_5"
-                        segmentDurationSeconds:
+                            - "HYBRIDCAST"
+                            - "DVB_DASH_2014"
+                        SegmentDurationSeconds:
                           type: integer
                           description: "Duration (in seconds) of each segment."
-                          minimum: 1
-                          maximum: 30
-                        segmentTemplateFormat:
+                        SegmentTemplateFormat:
                           type: string
                           description: "Determines the type of SegmentTemplate included in the Media Presentation Description (MPD)."
                           enum:
                             - "NUMBER_WITH_TIMELINE"
                             - "TIME_WITH_TIMELINE"
                             - "NUMBER_WITH_DURATION"
-                        streamSelection:
+                        StreamSelection:
                           type: object
                           description: "A StreamSelection configuration."
-                          additionalProperties: true
-                        suggestedPresentationDelaySeconds:
+                          properties:
+                            MaxVideoBitsPerSecond:
+                              type: integer
+                              description: "The maximum video bitrate (bps) to include in output."
+                            MinVideoBitsPerSecond:
+                              type: integer
+                              description: "The minimum video bitrate (bps) to include in output."
+                            StreamOrder:
+                              type: string
+                              description: "A directive that determines the order of streams in the output."
+                              enum:
+                                - "ORIGINAL"
+                                - "VIDEO_BITRATE_ASCENDING"
+                                - "VIDEO_BITRATE_DESCENDING"
+                        SuggestedPresentationDelaySeconds:
                           type: integer
                           description: "Duration (in seconds) to delay live content before presentation."
-                          minimum: 1
-                        utcTiming:
+                        UtcTiming:
                           type: string
                           description: "Determines the type of UTCTiming included in the Dynamic Adaptive Streaming over HTTP (DASH) Media Presentation Description (MPD)."
                           enum:
@@ -232,15 +396,14 @@ spec:
                             - "HTTP-HEAD"
                             - "HTTP-ISO"
                             - "HTTP-XSDATE"
-                        utcTimingUri:
+                        UtcTimingUri:
                           type: string
                           description: "Specifies the value attribute of the UTCTiming field when utcTiming is set to HTTP-ISO, HTTP-HEAD or HTTP-XSDATE."
-                      additionalProperties: false
                     hlsPackage:
                       type: object
                       description: "An HTTP Live Streaming (HLS) packaging configuration."
                       properties:
-                        adMarkers:
+                        AdMarkers:
                           type: string
                           description: "This setting controls how ad markers are included in the packaged OriginEndpoint."
                           enum:
@@ -248,7 +411,7 @@ spec:
                             - "SCTE35_ENHANCED"
                             - "PASSTHROUGH"
                             - "DATERANGE"
-                        adsOnDeliveryRestrictions:
+                        AdsOnDeliveryRestrictions:
                           type: string
                           description: "The flags on SCTE-35 segmentation descriptors that have to be present for AWS Elemental MediaPackage to insert ad markers in the output manifest."
                           enum:
@@ -256,7 +419,7 @@ spec:
                             - "RESTRICTED"
                             - "UNRESTRICTED"
                             - "BOTH"
-                        adTriggers:
+                        AdTriggers:
                           type: array
                           description: "Specifies the SCTE-35 message types that AWS Elemental MediaPackage treats as ad markers in the output manifest."
                           items:
@@ -270,79 +433,233 @@ spec:
                               - "DISTRIBUTOR_PLACEMENT_OPPORTUNITY"
                               - "PROVIDER_OVERLAY_PLACEMENT_OPPORTUNITY"
                               - "DISTRIBUTOR_OVERLAY_PLACEMENT_OPPORTUNITY"
-                        encryption:
+                        Encryption:
                           type: object
                           description: "An HTTP Live Streaming (HLS) encryption configuration."
-                          additionalProperties: true
-                        includeDvbSubtitles:
+                          properties:
+                            ConstantInitializationVector:
+                              type: string
+                              description: "An optional 128-bit, 16-byte hex value represented by a 32-character string, used in conjunction with the key for encrypting blocks. If you don't specify a value, then AWS Elemental MediaPackage creates the constant initialization vector (IV)."
+                              pattren: ^"\A[0-9a-fA-F]+\Z$"
+                            EncryptionMethod:
+                              type: string
+                              description: "The encryption method to use."
+                              enum:
+                                - "SAMPLE_AES"
+                                - "AES_CTR"
+                            KeyRotationIntervalSeconds:
+                              type: integer
+                              description: "Time (in seconds) between each encryption key rotation."
+                              minimum: 1
+                            SpekeKeyProvider:
+                              type: object
+                              description: "A configuration for accessing an external Secure Packager and Encoder Key Exchange (SPEKE) service that will provide encryption keys."
+                              properties:
+                                CertificateArn:
+                                  type: string
+                                  description: "The Amazon Resource Name (ARN) for the certificate that you imported to AWS Certificate Manager to add content key encryption to this endpoint. For this feature to work, your DRM key provider must support content key encryption."
+                                EncryptionContractConfiguration:
+                                  type: object
+                                  description: "Use encryptionContractConfiguration to configure one or more content encryption keys for your endpoints that use SPEKE Version 2.0. The encryption contract defines which content keys are used to encrypt the audio and video tracks in your stream. To configure the encryption contract, specify which audio and video encryption presets to use."
+                                  properties:
+                                    PresetSpeke20Audio:
+                                      type: string
+                                      description: "A collection of audio encryption presets."
+                                      enum:
+                                        - "PRESET-AUDIO-1"
+                                        - "PRESET-AUDIO-2"
+                                        - "PRESET-AUDIO-3"
+                                        - "SHARED"
+                                        - "UNENCRYPTED"
+                                    PresetSpeke20Video:
+                                      type: string
+                                      description: "A collection of video encryption presets."
+                                      enum:
+                                        - "PRESET-VIDEO-1"
+                                        - "PRESET-VIDEO-2"
+                                        - "PRESET-VIDEO-3"
+                                        - "PRESET-VIDEO-4"
+                                        - "PRESET-VIDEO-5"
+                                        - "PRESET-VIDEO-6"
+                                        - "PRESET-VIDEO-7"
+                                        - "PRESET-VIDEO-8"
+                                        - "SHARED"
+                                        - "UNENCRYPTED"
+                                  required:
+                                    - PresetSpeke20Audio
+                                    - PresetSpeke20Video
+                                ResourceId:
+                                  type: string
+                                  description: Unique identifier for this endpoint, as it is configured in the key provider service.
+                                RoleArn:
+                                  type: string
+                                  description: "The ARN for the IAM role that's granted by the key provider to provide access to the key provider API. This role must have a trust policy that allows AWS Elemental MediaPackage to assume the role, and it must have a sufficient permissions policy to allow access to the specific key retrieval URL. Valid format: arn:aws:iam::{accountID}:role/{name}"
+                                RepeatExtXKey:
+                                  type: boolean
+                                  description: "Repeat the EXT-X-KEY directive for every media segment. This might result in an increase in client requests to the DRM server."
+                                SystemIds:
+                                  type: array
+                                  description: "List of unique identifiers for the DRM systems to use, as defined in the CPIX specification."
+                                  items:
+                                    type: string
+                                Url:
+                                  type: string
+                                  description: "URL for the key provider’s key retrieval API endpoint. Must start with https://."
+                              required:
+                                - ResourceId
+                                - RoleArn
+                                - SystemIds
+                                - Url
+                          required:
+                            - SpekeKeyProvider
+                        IncludeDvbSubtitles:
                           type: boolean
                           description: "When enabled, MediaPackage passes through digital video broadcasting (DVB) subtitles into the output."
-                        includeIframeOnlyStream:
+                        IncludeIframeOnlyStream:
                           type: boolean
                           description: "When enabled, an I-Frame only stream will be included in the output."
-                        playlistType:
+                        PlaylistType:
                           type: string
                           description: "The HTTP Live Streaming (HLS) playlist type."
                           enum:
                             - "NONE"
                             - "EVENT"
                             - "VOD"
-                        playlistWindowSeconds:
+                        PlaylistWindowSeconds:
                           type: integer
                           description: "The total duration (in seconds) of each playlist."
                           minimum: 1
-                        programDateTimeIntervalSeconds:
+                        ProgramDateTimeIntervalSeconds:
                           type: integer
                           description: "The interval (in seconds) between each EXT-X-PROGRAM-DATE-TIME tag inserted into manifests."
                           minimum: 1
-                        segmentDurationSeconds:
+                        SegmentDurationSeconds:
                           type: integer
                           description: "Duration (in seconds) of each segment."
                           minimum: 1
                           maximum: 30
-                        streamSelection:
+                        StreamSelection:
                           type: object
                           description: "A StreamSelection configuration."
-                          additionalProperties: true
-                        useAudioRenditionGroup:
+                          properties:
+                            MaxVideoBitsPerSecond:
+                              type: integer
+                              description: "The maximum video bitrate (bps) to include in output."
+                            MinVideoBitsPerSecond:
+                              type: integer
+                              description: "The minimum video bitrate (bps) to include in output."
+                            StreamOrder:
+                              type: string
+                              description: "A directive that determines the order of streams in the output."
+                              enum:
+                                - "ORIGINAL"
+                                - "VIDEO_BITRATE_ASCENDING"
+                                - "VIDEO_BITRATE_DESCENDING"
+                        UseAudioRenditionGroup:
                           type: boolean
                           description: "When enabled, audio streams will be placed in rendition groups in the output."
-                      additionalProperties: false
                     mssPackage:
                       type: object
                       description: "A Microsoft Smooth Streaming (MSS) packaging configuration."
                       properties:
-                        encryption:
+                        Encryption:
                           type: object
                           description: "A Microsoft Smooth Streaming (MSS) encryption configuration."
-                          additionalProperties: true
-                        manifestWindowSeconds:
+                          properties:
+                            SpekeKeyProvider:
+                              type: object
+                              description: "A configuration for accessing an external Secure Packager and Encoder Key Exchange (SPEKE) service that will provide encryption keys."
+                              properties:
+                                CertificateArn:
+                                  type: string
+                                  description: "The Amazon Resource Name (ARN) for the certificate that you imported to AWS Certificate Manager to add content key encryption to this endpoint. For this feature to work, your DRM key provider must support content key encryption."
+                                EncryptionContractConfiguration:
+                                  type: object
+                                  description: "Use encryptionContractConfiguration to configure one or more content encryption keys for your endpoints that use SPEKE Version 2.0. The encryption contract defines which content keys are used to encrypt the audio and video tracks in your stream. To configure the encryption contract, specify which audio and video encryption presets to use."
+                                  properties:
+                                    PresetSpeke20Audio:
+                                      type: string
+                                      description: "A collection of audio encryption presets."
+                                      enum:
+                                        - "PRESET-AUDIO-1"
+                                        - "PRESET-AUDIO-2"
+                                        - "PRESET-AUDIO-3"
+                                        - "SHARED"
+                                        - "UNENCRYPTED"
+                                    PresetSpeke20Video:
+                                      type: string
+                                      description: "A collection of video encryption presets."
+                                      enum:
+                                        - "PRESET-VIDEO-1"
+                                        - "PRESET-VIDEO-2"
+                                        - "PRESET-VIDEO-3"
+                                        - "PRESET-VIDEO-4"
+                                        - "PRESET-VIDEO-5"
+                                        - "PRESET-VIDEO-6"
+                                        - "PRESET-VIDEO-7"
+                                        - "PRESET-VIDEO-8"
+                                        - "SHARED"
+                                        - "UNENCRYPTED"
+                                  required:
+                                    - PresetSpeke20Audio
+                                    - PresetSpeke20Video
+                                ResourceId:
+                                  type: string
+                                  description: Unique identifier for this endpoint, as it is configured in the key provider service.
+                                RoleArn:
+                                  type: string
+                                  description: "The ARN for the IAM role that's granted by the key provider to provide access to the key provider API. This role must have a trust policy that allows AWS Elemental MediaPackage to assume the role, and it must have a sufficient permissions policy to allow access to the specific key retrieval URL. Valid format: arn:aws:iam::{accountID}:role/{name}"
+                                RepeatExtXKey:
+                                  type: boolean
+                                  description: "Repeat the EXT-X-KEY directive for every media segment. This might result in an increase in client requests to the DRM server."
+                                SystemIds:
+                                  type: array
+                                  description: "List of unique identifiers for the DRM systems to use, as defined in the CPIX specification."
+                                  items:
+                                    type: string
+                                Url:
+                                  type: string
+                                  description: "URL for the key provider’s key retrieval API endpoint. Must start with https://."
+                              required:
+                                - ResourceId
+                                - RoleArn
+                                - SystemIds
+                                - Url
+                          required:
+                            - SpekeKeyProvider
+                        ManifestWindowSeconds:
                           type: integer
                           description: "Time window (in seconds) contained in each manifest."
-                          minimum: 1
-                        segmentDurationSeconds:
+                        SegmentDurationSeconds:
                           type: integer
                           description: "Duration (in seconds) of each segment."
-                          minimum: 1
-                          maximum: 30
-                        streamSelection:
+                        StreamSelection:
                           type: object
                           description: "A StreamSelection configuration."
-                          additionalProperties: true
-                      additionalProperties: false
+                          properties:
+                            MaxVideoBitsPerSecond:
+                              type: integer
+                              description: "The maximum video bitrate (bps) to include in output."
+                            MinVideoBitsPerSecond:
+                              type: integer
+                              description: "The minimum video bitrate (bps) to include in output."
+                            StreamOrder:
+                              type: string
+                              description: "A directive that determines the order of streams in the output."
+                              enum:
+                                - "ORIGINAL"
+                                - "VIDEO_BITRATE_ASCENDING"
+                                - "VIDEO_BITRATE_DESCENDING"
                     region:
                       type: string
                       description: "AWS region where the origin endpoint will be created."
-                      default: "us-east-1"
                     tags:
                       type: object
                       description: "A map of tags to assign to the resource."
                       additionalProperties:
                         type: string
                   required:
-                    - id
                     - channelId
-                  additionalProperties: false
                 deletionPolicy:
                   type: string
                   enum:
@@ -406,7 +723,6 @@ spec:
                   description: "WriteConnectionSecretsToNamespace specifies the namespace in which the connection secrets of this managed resource should be written."
               required:
                 - parameters
-              additionalProperties: false
             status:
               type: object
               properties:
@@ -437,27 +753,9 @@ spec:
                     lastPublishedTime:
                       type: string
                       format: date-time
-                arn:
-                  type: string
-                  description: "The Amazon Resource Name (ARN) assigned to the OriginEndpoint."
-                url:
-                  type: string
-                  description: "The URL of the packaged OriginEndpoint for consumption."
+                atProvider:
+                  type: object
+                  description: "Porvider state."
+                  x-kubernetes-preserve-unknown-fields: true
           required:
             - spec
-      additionalPrinterColumns:
-        - name: READY
-          type: string
-          jsonPath: ".status.conditions[?(@.type=='Ready')].status"
-        - name: SYNCED
-          type: string
-          jsonPath: ".status.conditions[?(@.type=='Synced')].status"
-        - name: EXTERNAL-NAME
-          type: string
-          jsonPath: ".metadata.annotations.crossplane\\.io/external-name"
-        - name: CHANNEL-ID
-          type: string
-          jsonPath: ".spec.parameters.channelId"
-        - name: AGE
-          type: date
-          jsonPath: ".metadata.creationTimestamp"

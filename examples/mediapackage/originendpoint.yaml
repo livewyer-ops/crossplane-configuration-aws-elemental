@@ -1,0 +1,32 @@
+apiVersion: mediapackage.aws.upbound.io/v1beta1
+kind: Channel
+metadata:
+  name: channel-test
+  labels:
+    mediapackage.aws.livewyer.io/channel: channel-test
+spec:
+  providerConfigRef:
+    name: aws
+  forProvider:
+    region: us-east-1
+    channelId: mediapackage-channel
+
+---
+apiVersion: mediapackage.aws.livewyer.io/v1alpha1
+kind: OriginEndpoint
+metadata:
+  name: originendpoint-test
+  labels:
+    mediapackage.aws.livewyer.io/originendpoint: originendpoint-test
+spec:
+  providerConfigRef:
+    name: aws
+  parameters:
+    region: us-east-1
+    channelId: mediapackage-channel
+    origination: ALLOW
+    whitelist:
+      - 192.168.1.10
+    cmafPackage:
+      HlsManifests:
+        - Id: hls-manifest

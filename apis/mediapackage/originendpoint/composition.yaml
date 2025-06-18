@@ -1,11 +1,11 @@
 apiVersion: apiextensions.crossplane.io/v1
 kind: Composition
 metadata:
-  name: multiplexprogram.medialive.aws.livewyer.io
+  name: originendpoint.mediapackage.aws.livewyer.io
 spec:
   compositeTypeRef:
-    apiVersion: medialive.aws.livewyer.io/v1alpha1
-    kind: XMultiplexProgram
+    apiVersion: mediapackage.aws.livewyer.io/v1alpha1
+    kind: XOriginEndpoint
   mode: Pipeline
   pipeline:
     - step: go-templating
@@ -25,9 +25,9 @@ spec:
             metadata:
               name: {{ $id }}
               annotations:
-                {{ setResourceNameAnnotation (printf "multiplexprogram.medialive.aws.livewyer.io/%s" $id) }}
+                {{ setResourceNameAnnotation (printf "originendpoint.mediapackage.aws.livewyer.io/%s" $id) }}
               labels:
-                medialive.aws.livewyer.io/multiplexprogram: {{ $id }}
+                mediapackage.aws.livewyer.io/originendpoint: {{ $id }}
             spec:
               {{- if .observed.composite.resource.spec.providerConfigRef }}
               providerConfigRef:
@@ -48,23 +48,44 @@ spec:
               writeConnectionSecretsToNamespace: {{ .observed.composite.resource.spec.writeConnectionSecretsToNamespace }}
               {{- end }}
               forProvider:
-                typeName: AWS::MediaLive::Multiplexprogram
+                typeName: AWS::MediaPackage::OriginEndpoint
                 region: {{ $spec.region }}
                 desiredState: |-
                   {
-                    "MultiplexId": "{{ $spec.multiplexId }}",
-                    "ProgramName": "{{ $spec.programName }}"
-                    {{- if $spec.multiplexProgramSettings }},
-                    "MultiplexProgramSettings": {{ toJson $spec.multiplexProgramSettings }}
+                    "Id": "{{ $id }}",
+                    "ChannelId": "{{ $spec.channelId }}"
+                    {{- if $spec.description }},
+                    "Description": "{{ $spec.description }}"
                     {{- end }}
-                    {{- if $spec.packetIdentifiersMap }},
-                    "PacketIdentifiersMap": {{ toJson $spec.packetIdentifiersMap }}
+                    {{- if $spec.manifestName }},
+                    "ManifestName": "{{ $spec.manifestName }}"
                     {{- end }}
-                    {{- if $spec.pipelineDetails }},
-                    "PipelineDetails": {{ toJson $spec.pipelineDetails }}
+                    {{- if $spec.origination }},
+                    "Origination": "{{ $spec.origination }}"
                     {{- end }}
-                    {{- if $spec.preferredChannelPipeline }},
-                    "PreferredChannelPipeline": "{{ $spec.preferredChannelPipeline }}"
+                    {{- if $spec.startoverWindowSeconds }},
+                    "StartoverWindowSeconds": {{ $spec.startoverWindowSeconds }}
+                    {{- end }}
+                    {{- if $spec.timeDelaySeconds }},
+                    "TimeDelaySeconds": {{ $spec.timeDelaySeconds }}
+                    {{- end }}
+                    {{- if $spec.whitelist }},
+                    "Whitelist": {{ toJson $spec.whitelist }}
+                    {{- end }}
+                    {{- if $spec.authorization }},
+                    "Authorization": {{ toJson $spec.authorization }}
+                    {{- end }}
+                    {{- if $spec.cmafPackage }},
+                    "CmafPackage": {{ toJson $spec.cmafPackage }}
+                    {{- end }}
+                    {{- if $spec.dashPackage }},
+                    "DashPackage": {{ toJson $spec.dashPackage }}
+                    {{- end }}
+                    {{- if $spec.hlsPackage }},
+                    "HlsPackage": {{ toJson $spec.hlsPackage }}
+                    {{- end }}
+                    {{- if $spec.mssPackage }},
+                    "MssPackage": {{ toJson $spec.mssPackage }}
                     {{- end }}
                     {{- if $spec.tags }},
                     "Tags": {{ toJson $spec.tags }}
@@ -73,7 +94,7 @@ spec:
 
             ---
 
-            {{ $awscc := getComposedResource . (printf "multiplexprogram.medialive.aws.livewyer.io/%s" $id) }}
+            {{ $awscc := getComposedResource . (printf "originendpoint.mediapackage.aws.livewyer.io/%s" $id) }}
             apiVersion: {{ .observed.composite.resource.apiVersion }}
             kind: {{ .observed.composite.resource.kind }}
             status:
