@@ -1,7 +1,7 @@
 apiVersion: apiextensions.crossplane.io/v1
 kind: CompositeResourceDefinition
 metadata:
-  name: xjobtemplate.mediaconvert.aws.livewyer.io
+  name: xjobtemplates.mediaconvert.aws.livewyer.io
 spec:
   group: mediaconvert.aws.livewyer.io
   names:
@@ -24,9 +24,6 @@ spec:
                 parameters:
                   type: object
                   properties:
-                    name:
-                      type: string
-                      description: "The name of the job template."
                     category:
                       type: string
                       description: "An optional category you create to organize your job templates."
@@ -41,116 +38,52 @@ spec:
                     queue:
                       type: string
                       description: "Optional. The queue that jobs created from this template are assigned to. If you don't specify this, jobs will be sent to the default queue."
-                    statusUpdateInterval:
-                      type: string
-                      description: "Specify how often MediaConvert sends STATUS_UPDATE events to Amazon CloudWatch Events. Set the interval, in seconds, between status updates."
-                      enum:
-                        - "SECONDS_10"
-                        - "SECONDS_12"
-                        - "SECONDS_15"
-                        - "SECONDS_20"
-                        - "SECONDS_30"
-                        - "SECONDS_60"
-                        - "SECONDS_120"
-                        - "SECONDS_180"
-                        - "SECONDS_240"
-                        - "SECONDS_300"
-                        - "SECONDS_360"
-                        - "SECONDS_420"
-                        - "SECONDS_480"
-                        - "SECONDS_540"
-                        - "SECONDS_600"
-                    accelerationSettings:
-                      type: object
-                      description: "Accelerated transcoding can significantly speed up jobs with long, visually complex content. Outputs that use this feature incur pro-tier pricing."
-                      properties:
-                        mode:
-                          type: string
-                          description: "Specify the conditions when the service will run your job with accelerated transcoding."
-                          enum:
-                            - "DISABLED"
-                            - "ENABLED"
-                            - "PREFERRED"
-                      required:
-                        - mode
-                      additionalProperties: false
-                    hopDestinations:
+                    outputGroups:
                       type: array
-                      description: "Optional list of hop destinations."
+                      description: "MediaConvert places outputs in the same output group container."
                       items:
                         type: object
                         properties:
-                          priority:
-                            type: integer
-                            description: "Optional. When you set up a job to use queue hopping, you can specify a different relative priority for the job in the destination queue."
-                            minimum: -50
-                            maximum: 50
-                          queue:
+                          Name:
                             type: string
-                            description: "Optional unless the job is submitted on the default queue. When you set up a job to use queue hopping, you can specify a destination queue."
-                          waitMinutes:
-                            type: integer
-                            description: "Required for setting up a job template for MediaConvert queue hopping. Minimum wait time in minutes until the job can hop to the destination queue."
-                            minimum: 1
-                            maximum: 1440
-                        additionalProperties: false
-                    settingsJson:
-                      type: object
-                      description: "Specify, in JSON format, the transcoding job settings for this job template. This specification must be formed in a particular way that conforms to AWS Elemental MediaConvert job validation. For more information about creating a job template model for the SettingsJson property, see the AWS Elemental MediaConvert User Guide."
-                      additionalProperties: true
-                      properties:
-                        timecodeConfig:
-                          type: object
-                          description: "These settings control how the service handles timecodes throughout the job."
-                          additionalProperties: true
-                        inputs:
-                          type: array
-                          description: "Use inputs to define the source files used in your transcoding job."
-                          items:
+                            description: "Name of the output group."
+                          OutputGroupSettings:
                             type: object
-                            additionalProperties: true
-                        outputGroups:
-                          type: array
-                          description: "MediaConvert places outputs in the same output group container."
-                          items:
-                            type: object
-                            additionalProperties: true
-                        adAvailOffset:
-                          type: integer
-                          description: "When specified, this offset (in milliseconds) is added to the input Ad Avail PTS time."
-                        availBlanking:
-                          type: object
-                          description: "Settings for ad avail blanking."
-                          additionalProperties: true
-                        esam:
-                          type: object
-                          description: "Settings for Event Signaling And Messaging (ESAM)."
-                          additionalProperties: true
-                        motionImageInserter:
-                          type: object
-                          description: "Overlay motion graphics on top of your video."
-                          additionalProperties: true
-                        nielsenConfiguration:
-                          type: object
-                          description: "Settings for your Nielsen configuration."
-                          additionalProperties: true
-                        nielsenNonLinearWatermark:
-                          type: object
-                          description: "Ignore these settings unless you are using Nielsen non-linear watermarking."
-                          additionalProperties: true
+                            description: "Output group settings that specify how the service handles outputs in this group."
+                            properties:
+                              FileGroupSettings:
+                                type: object
+                                description: "Settings related to your File output group."
+                              Type:
+                                type: string
+                                description: "Type of output group."
+                                enum:
+                                  - "FILE_GROUP_SETTINGS"
+                          Outputs:
+                            type: array
+                            description: "This object holds groups of encoding settings, one group of settings per output."
+                            items:
+                              type: object
+                              properties:
+                                Extension:
+                                  type: string
+                                  description: "Use Extension to specify the file extension for the outputs in this output group."
+                                NameModifier:
+                                  type: string
+                                  description: "Use Name modifier to have the service add a string to the end of each output filename."
+                                Preset:
+                                  type: string
+                                  description: "Use Preset to specify a preset for your transcoding settings."
                     region:
                       type: string
                       description: "AWS region where the job template will be created."
-                      default: "us-east-1"
                     tags:
                       type: object
                       description: "A map of tags to assign to the resource."
                       additionalProperties:
                         type: string
                   required:
-                    - name
-                    - settingsJson
-                  additionalProperties: false
+                    - outputGroups
                 deletionPolicy:
                   type: string
                   enum:
@@ -245,36 +178,9 @@ spec:
                     lastPublishedTime:
                       type: string
                       format: date-time
-                arn:
-                  type: string
-                  description: "The Amazon Resource Name (ARN) of the job template."
-                name:
-                  type: string
-                  description: "The name of the job template."
-                type:
-                  type: string
-                  description: "A system-generated string that identifies the type of job template."
-                  enum:
-                    - "SYSTEM"
-                    - "CUSTOM"
+                atProvider:
+                  type: object
+                  description: "Provider state."
+                  x-kubernetes-preserve-unknown-fields: true
           required:
             - spec
-      additionalPrinterColumns:
-        - name: READY
-          type: string
-          jsonPath: ".status.conditions[?(@.type=='Ready')].status"
-        - name: SYNCED
-          type: string
-          jsonPath: ".status.conditions[?(@.type=='Synced')].status"
-        - name: EXTERNAL-NAME
-          type: string
-          jsonPath: ".metadata.annotations.crossplane\\.io/external-name"
-        - name: CATEGORY
-          type: string
-          jsonPath: ".spec.parameters.category"
-        - name: PRIORITY
-          type: integer
-          jsonPath: ".spec.parameters.priority"
-        - name: AGE
-          type: date
-          jsonPath: ".metadata.creationTimestamp"
