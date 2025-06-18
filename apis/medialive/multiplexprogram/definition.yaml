@@ -1,7 +1,7 @@
 apiVersion: apiextensions.crossplane.io/v1
 kind: CompositeResourceDefinition
 metadata:
-  name: xmultiplexprogram.medialive.aws.livewyer.io
+  name: xmultiplexprograms.medialive.aws.livewyer.io
 spec:
   group: medialive.aws.livewyer.io
   names:
@@ -34,158 +34,130 @@ spec:
                       type: object
                       description: "Multiplex Program settings configuration."
                       properties:
-                        preferredChannelPipeline:
+                        PreferredChannelPipeline:
                           type: string
                           description: "Indicates which pipeline is preferred by the multiplex for program ingest."
                           enum:
                             - "CURRENTLY_ACTIVE"
                             - "PIPELINE_0"
                             - "PIPELINE_1"
-                        programNumber:
+                        ProgramNumber:
                           type: integer
                           description: "Unique program number."
                           minimum: 0
                           maximum: 65535
-                        serviceDescriptor:
+                        ServiceDescriptor:
                           type: object
                           description: "Transport stream service descriptor configuration for the Multiplex program."
                           properties:
-                            providerName:
+                            ProviderName:
                               type: string
                               description: "Name of the provider."
+                              minLength: 1
                               maxLength: 256
-                            serviceName:
+                            ServiceName:
                               type: string
                               description: "Name of the service."
+                              minLength: 1
                               maxLength: 256
-                          additionalProperties: false
-                        videoSettings:
+                        VideoSettings:
                           type: object
                           description: "Program video settings configuration."
                           properties:
-                            constantBitrate:
+                            ConstantBitrate:
                               type: integer
                               description: "The constant bitrate configuration for the video encode."
                               minimum: 100000
                               maximum: 100000000
-                            statmuxSettings:
+                            StatmuxSettings:
                               type: object
                               description: "Statmux rate control settings."
                               properties:
-                                maximumBitrate:
+                                MaximumBitrate:
                                   type: integer
                                   description: "Maximum statmux bitrate."
                                   minimum: 100000
                                   maximum: 100000000
-                                minimumBitrate:
+                                MinimumBitrate:
                                   type: integer
                                   description: "Minimum statmux bitrate."
                                   minimum: 100000
                                   maximum: 100000000
-                                priority:
+                                Priority:
                                   type: integer
                                   description: "The priority value for the video stream."
                                   minimum: -5
                                   maximum: 5
-                              additionalProperties: false
                           oneOf:
-                            - required: ["constantBitrate"]
-                            - required: ["statmuxSettings"]
-                          additionalProperties: false
+                            - required: ["ConstantBitrate"]
+                            - required: ["StatmuxSettings"]
                       required:
-                        - programNumber
-                      additionalProperties: false
+                        - ProgramNumber
                     packetIdentifiersMap:
                       type: object
                       description: "Packet identifiers map for the multiplex program."
                       properties:
-                        audioPids:
+                        AudioPids:
                           type: array
                           description: "Audio packet identifiers."
                           items:
                             type: integer
                             minimum: 32
                             maximum: 8190
-                        dvbSubPids:
+                        DvbSubPids:
                           type: array
                           description: "DVB subtitle packet identifiers."
                           items:
                             type: integer
-                            minimum: 32
-                            maximum: 8190
-                        dvbTeletextPid:
+                        DvbTeletextPid:
                           type: integer
                           description: "DVB teletext packet identifier."
-                          minimum: 32
-                          maximum: 8190
-                        etvPlatformPid:
+                        EtvPlatformPid:
                           type: integer
                           description: "ETV platform packet identifier."
-                          minimum: 32
-                          maximum: 8190
-                        etvSignalPid:
+                        EtvSignalPid:
                           type: integer
                           description: "ETV signal packet identifier."
-                          minimum: 32
-                          maximum: 8190
-                        klvDataPids:
+                        KlvDataPids:
                           type: array
                           description: "KLV data packet identifiers."
                           items:
                             type: integer
-                            minimum: 32
-                            maximum: 8190
-                        pcrPid:
+                        PcrPid:
                           type: integer
                           description: "PCR packet identifier."
-                          minimum: 32
-                          maximum: 8190
-                        pmtPid:
+                        PmtPid:
                           type: integer
                           description: "PMT packet identifier."
-                          minimum: 32
-                          maximum: 8190
-                        privateMetadataPid:
+                        PrivateMetadataPid:
                           type: integer
                           description: "Private metadata packet identifier."
-                          minimum: 32
-                          maximum: 8190
-                        scte27Pids:
+                        Scte27Pids:
                           type: array
                           description: "SCTE-27 packet identifiers."
                           items:
                             type: integer
-                            minimum: 32
-                            maximum: 8190
-                        scte35Pid:
+                        Scte35Pid:
                           type: integer
                           description: "SCTE-35 packet identifier."
-                          minimum: 32
-                          maximum: 8190
-                        timedMetadataPid:
+                        TimedMetadataPid:
                           type: integer
                           description: "Timed metadata packet identifier."
-                          minimum: 32
-                          maximum: 8190
-                        videoPid:
+                        VideoPid:
                           type: integer
                           description: "Video packet identifier."
-                          minimum: 32
-                          maximum: 8190
-                      additionalProperties: false
                     pipelineDetails:
                       type: array
                       description: "The current source for one of the pipelines in the multiplex."
                       items:
                         type: object
                         properties:
-                          activeChannelPipeline:
+                          ActiveChannelPipeline:
                             type: string
                             description: "Identifies the channel pipeline that is currently active for the pipeline (identified by PipelineId) in the multiplex."
-                          pipelineId:
+                          PipelineId:
                             type: string
                             description: "Identifies a specific pipeline in the multiplex."
-                        additionalProperties: false
                     preferredChannelPipeline:
                       type: string
                       description: "Indicates which pipeline is preferred by the multiplex for program ingest. If set to 'PIPELINE_0' or 'PIPELINE_1' and an unhealthy ingest causes the multiplex to switch to the non-preferred pipeline, it will switch back once that ingest is healthy again."
@@ -205,7 +177,6 @@ spec:
                   required:
                     - multiplexId
                     - programName
-                  additionalProperties: false
                 deletionPolicy:
                   type: string
                   enum:
@@ -300,27 +271,9 @@ spec:
                     lastPublishedTime:
                       type: string
                       format: date-time
-                channelId:
-                  type: string
-                  description: "The unique ID of the channel."
+                atProvider:
+                  type: object
+                  description: "Porvider state."
+                  x-kubernetes-preserve-unknown-fields: true
           required:
             - spec
-      additionalPrinterColumns:
-        - name: READY
-          type: string
-          jsonPath: ".status.conditions[?(@.type=='Ready')].status"
-        - name: SYNCED
-          type: string
-          jsonPath: ".status.conditions[?(@.type=='Synced')].status"
-        - name: EXTERNAL-NAME
-          type: string
-          jsonPath: ".metadata.annotations.crossplane\\.io/external-name"
-        - name: MULTIPLEX-ID
-          type: string
-          jsonPath: ".spec.parameters.multiplexId"
-        - name: CHANNEL-ID
-          type: string
-          jsonPath: ".status.channelId"
-        - name: AGE
-          type: date
-          jsonPath: ".metadata.creationTimestamp"
