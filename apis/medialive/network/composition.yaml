@@ -29,24 +29,24 @@ spec:
               labels:
                 medialive.aws.livewyer.io/network: {{ $id }}
             spec:
-              {{- if .observed.composite.resource.spec.providerConfigRef }}
+            {{- if .observed.composite.resource.spec.providerConfigRef }}
               providerConfigRef:
-                {{ toYaml .observed.composite.resource.spec.providerConfigRef | indent 4 }}
-              {{- end }}
-              {{- if .observed.composite.resource.spec.deletionPolicy }}
+            {{ toYaml .observed.composite.resource.spec.providerConfigRef | indent 4 }}
+            {{- end }}
+            {{- if .observed.composite.resource.spec.deletionPolicy }}
               deletionPolicy: {{ .observed.composite.resource.spec.deletionPolicy }}
-              {{- end }}
-              {{- if .observed.composite.resource.spec.managementPolicies }}
+            {{- end }}
+            {{- if .observed.composite.resource.spec.managementPolicies }}
               managementPolicies:
-                {{ toYaml .observed.composite.resource.spec.managementPolicies | indent 4 }}
-              {{- end }}
-              {{- if .observed.composite.resource.spec.publishConnectionDetailsTo }}
+            {{ toYaml .observed.composite.resource.spec.managementPolicies | indent 4 }}
+            {{- end }}
+            {{- if .observed.composite.resource.spec.publishConnectionDetailsTo }}
               publishConnectionDetailsTo:
-                {{ toYaml .observed.composite.resource.spec.publishConnectionDetailsTo | indent 4 }}
-              {{- end }}
-              {{- if .observed.composite.resource.spec.writeConnectionSecretsToNamespace }}
+            {{ toYaml .observed.composite.resource.spec.publishConnectionDetailsTo | indent 4 }}
+            {{- end }}
+            {{- if .observed.composite.resource.spec.writeConnectionSecretsToNamespace }}
               writeConnectionSecretsToNamespace: {{ .observed.composite.resource.spec.writeConnectionSecretsToNamespace }}
-              {{- end }}
+            {{- end }}
               forProvider:
                 typeName: AWS::MediaLive::Network
                 region: {{ $spec.region }}
