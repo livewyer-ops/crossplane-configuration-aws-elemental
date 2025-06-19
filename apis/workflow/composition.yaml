@@ -1,0 +1,108 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: workflow.elemental.aws.livewyer.io
+spec:
+  compositeTypeRef:
+    apiVersion: elemental.aws.livewyer.io/v1alpha1
+    kind: XWorkflow
+  mode: Pipeline
+  pipeline:
+    - step: go-templating
+      functionRef:
+        name: function-go-templating
+      input:
+        apiVersion: gotemplating.fn.crossplane.io/v1beta1
+        kind: GoTemplate
+        source: Inline
+        inline:
+          template: |
+            {{- range $step := .observed.composite.resource.spec.steps }}
+            {{- range $resource := $step.resources }}
+
+            ---
+
+            apiVersion: {{ $resource.spec.apiVersion }}
+            kind: {{ $resource.spec.kind }}
+            metadata:
+              name: {{ $resource.name }}
+              namespace: {{ default "default" $.observed.composite.resource.metadata.namespace }}
+              annotations:
+                {{ setResourceNameAnnotation (regexReplaceAll "(.*)/(.*)" $resource.spec.apiVersion (printf "%s.${1}/%s" ($resource.spec.kind | lower) $resource.name)) }}
+              labels:
+                elemental.aws.livewyer.io/workflow: {{ $.observed.composite.resource.metadata.name }}
+                {{ regexReplaceAll "(.*)/(.*)" $resource.spec.apiVersion (printf "${1}/%s" $resource.spec.kind | lower) }}: {{ $resource.name }}
+            spec:
+            {{- if $resource.spec.spec.providerConfigRef }}
+              providerConfigRef:
+            {{ toYaml $resource.spec.spec.providerConfigRef | indent 4 }}
+            {{- else }}
+              providerConfigRef:
+            {{ toYaml $.observed.composite.resource.spec.providerConfigRef | indent 4 }}
+            {{- end }}
+            {{- if $resource.spec.spec.deletionPolicy }}
+              deletionPolicy: {{ $resource.spec.spec.deletionPolicy }}
+            {{- end }}
+            {{- if $resource.spec.spec.managementPolicies }}
+              managementPolicies:
+            {{ toYaml $resource.spec.spec.managementPolicies | indent 4 }}
+            {{- end }}
+            {{- if $resource.spec.spec.publishConnectionDetailsTo }}
+              publishConnectionDetailsTo:
+            {{ toYaml $resource.spec.spec.publishConnectionDetailsTo | indent 4 }}
+            {{- end }}
+            {{- if $resource.spec.spec.writeConnectionSecretsToNamespace }}
+              writeConnectionSecretsToNamespace: {{ $resource.spec.spec.writeConnectionSecretsToNamespace }}
+            {{- end }}
+              parameters:
+            {{- if $resource.spec.spec.parameters.region }}
+            {{ toYaml $resource.spec.spec.parameters | indent 4 }}
+            {{- else }}
+                region: {{ $.observed.composite.resource.spec.forProvider.region }}
+            {{ toYaml $resource.spec.spec.parameters | indent 4 }}
+            {{- end }}
+
+            ---
+
+            {{- range $ptfn := (default list $resource.dependencies) }}
+            apiVersion: pt.fn.crossplane.io/v1beta1
+            kind: Resources
+            metadata:
+              name: ptfn-{{ $resource.name }}-{{ $ptfn.source.name }}
+              namespace: {{ default "default" $.observed.composite.resource.metadata.namespace }}
+              annotations:
+                {{ setResourceNameAnnotation (printf "ptfn-%s-%s" $resource.name $ptfn.source.name) }}
+              labels:
+                elemental.aws.livewyer.io/workflow: {{ $.observed.composite.resource.metadata.name }}
+            resources:
+              - name: {{ $ptfn.source.name }}
+                patches:
+                  - type: FromCompositeFieldPath
+                    fromFieldPath: "{{ $ptfn.source.field }}"
+                    toFieldPath: "status.atProvider.arn"
+              - name: {{ $resource.name }}
+                patches:
+                  - type: FromCompositeFieldPath
+                    fromFieldPath: "status.atProvider.arn"
+                    toFieldPath: "{{ $ptfn.destination.field }}"
+            {{- end }}
+
+            {{- end }}
+            {{- end }}
+
+    # - step: patch-and-transform
+    #   functionRef:
+    #     name: function-patch-and-transform
+    #   input:
+    #     apiVersion: pt.fn.crossplane.io/v1beta1
+    #     kind: Resources
+    #     resources:
+    #       - name:
+    #         patches:
+    #           - type: FromCompositeFieldPath
+    #             fromFieldPath: status.forProvider.arn
+    #             toFieldPath: spec.parameters.placementArn
+
+    - step: automatically-detect-ready-composed-resources
+      functionRef:
+        name: function-auto-ready

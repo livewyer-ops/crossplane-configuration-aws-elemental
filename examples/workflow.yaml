@@ -1,0 +1,90 @@
+apiVersion: elemental.aws.livewyer.io/v1alpha1
+kind: XWorkflow
+metadata:
+  name: workflow-test
+  labels:
+    elemental.aws.livewyer.io/workflow: workflow-test
+spec:
+  providerConfigRef:
+    name: aws
+  forProvider:
+    region: us-east-1
+  steps:
+    - name: mediaconnect-gateway
+      resources:
+        - name: mediaconnect-gateway-a
+          spec:
+            apiVersion: mediaconnect.aws.livewyer.io/v1alpha1
+            kind: Gateway
+            spec:
+              parameters:
+                egressCidrBlocks:
+                  - 88.98.197.180/32
+                networks:
+                  - Name: home
+                    CidrBlock: 88.98.197.180/32
+        - name: mediaconnect-gateway-b
+          spec:
+            apiVersion: mediaconnect.aws.livewyer.io/v1alpha1
+            kind: Gateway
+            spec:
+              parameters:
+                egressCidrBlocks:
+                  - 88.98.197.180/32
+                networks:
+                  - Name: home
+                    CidrBlock: 88.98.197.180/32
+    - name: mediaconnect-bridge
+      resources:
+        - name: mediaconnect-bridge-a
+          dependencies:
+            - source:
+                name: mediaconnect-gateway-a
+                field: status.atProvider.id
+              destination:
+                field: spec.parameters.placementArn
+          spec:
+            apiVersion: mediaconnect.aws.livewyer.io/v1alpha1
+            kind: Bridge
+            spec:
+              parameters:
+                ingressGatewayBridge:
+                  MaxOutputs: 2
+                  MaxBitrate: 80000000
+                sources:
+                  - NetworkSource:
+                      Name: onprem-a
+                      MulticastIp: 224.0.0.0
+                      NetworkName: onprem-a
+                      Port: 3000
+                      Protocol: rtp
+                sourceFailoverConfig:
+                  State: ENABLED
+                  FailoverMode: FAILOVER
+                placementArn: ""
+        - name: mediaconnect-bridge-b
+          dependencies:
+            - source:
+                name: mediaconnect-gateway-b
+                field: status.atProvider.id
+              destination:
+                field: spec.parameters.placementArn
+          spec:
+            apiVersion: mediaconnect.aws.livewyer.io/v1alpha1
+            kind: Bridge
+            spec:
+              parameters:
+                ingressGatewayBridge:
+                  MaxOutputs: 2
+                  MaxBitrate: 80000000
+                sources:
+                  - NetworkSource:
+                      Name: onprem-b
+                      MulticastIp: 224.0.0.0
+                      NetworkName: onprem-b
+                      Port: 3000
+                      Protocol: rtp
+                sourceFailoverConfig:
+                  State: ENABLED
+                  FailoverMode: FAILOVER
+                placementArn: ""

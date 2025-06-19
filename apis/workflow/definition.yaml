@@ -1,0 +1,25 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: CompositeResourceDefinition
+metadata:
+  name: xworkflows.elemental.aws.livewyer.io
+spec:
+  group: elemental.aws.livewyer.io
+  names:
+    kind: XWorkflow
+    plural: xworkflows
+  claimNames:
+    kind: Workflow
+    plural: workflows
+  versions:
+    - name: v1alpha1
+      served: true
+      referenceable: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              x-kubernetes-preserve-unknown-fields: true
+          required:
+            - spec
