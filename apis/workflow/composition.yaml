@@ -19,6 +19,8 @@ spec:
           template: |
             {{- range $step := .observed.composite.resource.spec.steps }}
             {{- range $resource := $step.resources }}
+            {{- $spec := (dig "spec" (dict) $resource.spec) }}
+            {{- $parameters := (dig "spec" "parameters" (dict) $resource.spec) }}
 
             ---
 
@@ -33,39 +35,41 @@ spec:
                 elemental.aws.livewyer.io/workflow: {{ $.observed.composite.resource.metadata.name }}
                 {{ regexReplaceAll "(.*)/(.*)" $resource.spec.apiVersion (printf "${1}/%s" $resource.spec.kind | lower) }}: {{ $resource.name }}
             spec:
-            {{- if $resource.spec.spec.providerConfigRef }}
+            {{- if $spec.providerConfigRef }}
               providerConfigRef:
-            {{ toYaml $resource.spec.spec.providerConfigRef | indent 4 }}
+            {{ toYaml $spec.providerConfigRef | indent 4 }}
             {{- else }}
               providerConfigRef:
             {{ toYaml $.observed.composite.resource.spec.providerConfigRef | indent 4 }}
             {{- end }}
-            {{- if $resource.spec.spec.deletionPolicy }}
-              deletionPolicy: {{ $resource.spec.spec.deletionPolicy }}
+            {{- if $spec.deletionPolicy }}
+              deletionPolicy: {{ $spec.deletionPolicy }}
             {{- end }}
-            {{- if $resource.spec.spec.managementPolicies }}
+            {{- if $spec.managementPolicies }}
               managementPolicies:
-            {{ toYaml $resource.spec.spec.managementPolicies | indent 4 }}
+            {{ toYaml $spec.managementPolicies | indent 4 }}
             {{- end }}
-            {{- if $resource.spec.spec.publishConnectionDetailsTo }}
+            {{- if $spec.publishConnectionDetailsTo }}
               publishConnectionDetailsTo:
-            {{ toYaml $resource.spec.spec.publishConnectionDetailsTo | indent 4 }}
+            {{ toYaml $spec.publishConnectionDetailsTo | indent 4 }}
             {{- end }}
-            {{- if $resource.spec.spec.writeConnectionSecretsToNamespace }}
-              writeConnectionSecretsToNamespace: {{ $resource.spec.spec.writeConnectionSecretsToNamespace }}
+            {{- if $spec.writeConnectionSecretsToNamespace }}
+              writeConnectionSecretsToNamespace: {{ $spec.writeConnectionSecretsToNamespace }}
             {{- end }}
               parameters:
-            {{- if $resource.spec.spec.parameters.region }}
-            {{ toYaml $resource.spec.spec.parameters | indent 4 }}
+            {{/*
+            {{- range $depend := (default list $resource.dependsOn) }}
+            {{ $mergedParams := mergeOverwrite $parameters (dict $depend.key (dig "resources" (regexReplaceAll "(.*)/(.*)" $depend.source.apiVersion (printf "%s.${1}/%s" ($depend.source.kind | lower) $depend.source.name)) "resource" "status" "atProvider" "id" "" $.observed)) }}
+            {{- end }}
+            */}}
+            {{- if $parameters.region }}
+            {{ toYaml $parameters | indent 4 }}
             {{- else }}
                 region: {{ $.observed.composite.resource.spec.forProvider.region }}
-            {{ toYaml $resource.spec.spec.parameters | indent 4 }}
+            {{ toYaml $parameters | indent 4 }}
             {{- end }}
-            {{- range $dependency := (default list $resource.dependsOn) }}
-            {{/*
-            {{ printf "%s: %s" $dependency.key (index (index $.observed.resources $dependency.source.name) $dependency.source.key | toString) | indent 4 }}
-            */}}
-            {{ printf "%s: %s" $dependency.key (dig "resources" (regexReplaceAll "(.*)/(.*)" $dependency.source.apiVersion (printf "%s.${1}/%s" ($dependency.source.kind | lower) $dependency.source.name)) "resource" "status" "atProvider" "id" "" $.observed) | indent 4 }}
+            {{- range $depend := (default list $resource.dependsOn) }}
+                {{ $depend.key }}: {{ dig "resources" (regexReplaceAll "(.*)/(.*)" $depend.source.apiVersion (printf "%s.${1}/%s" ($depend.source.kind | lower) $depend.source.name)) "resource" "status" "atProvider" "id" "" $.observed }}
             {{- end }}
 
             {{- end }}

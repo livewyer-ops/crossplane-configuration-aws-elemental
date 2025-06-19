@@ -34,6 +34,7 @@ spec:
                 networks:
                   - Name: onprem-b
                     CidrBlock: 88.98.197.180/32
+
     - name: mediaconnect-bridge
       resources:
         - name: mediaconnect-bridge-a
@@ -88,3 +89,34 @@ spec:
                 sourceFailoverConfig:
                   State: ENABLED
                   FailoverMode: FAILOVER
+
+    - name: mediaconnect-flow
+      resources:
+        - name: mediaconnect-flow-a
+          dependsOn:
+            - key: GatewayBridgeSource.BridgeArn
+              source:
+                name: mediaconnect-bridge-a
+                apiVersion: mediaconnect.aws.livewyer.io/v1alpha1
+                kind: XBridge
+                key: status.atProvider.id
+          spec:
+            apiVersion: mediaconnect.aws.livewyer.io/v1alpha1
+            kind: XFlow
+            spec:
+              parameters:
+                flowSize: MEDIUM
+        - name: mediaconnect-flow-b
+          dependsOn:
+            - key: GatewayBridgeSource.BridgeArn
+              source:
+                name: mediaconnect-bridge-a
+                apiVersion: mediaconnect.aws.livewyer.io/v1alpha1
+                kind: XBridge
+                key: status.atProvider.id
+          spec:
+            apiVersion: mediaconnect.aws.livewyer.io/v1alpha1
+            kind: XFlow
+            spec:
+              parameters:
+                flowSize: MEDIUM
