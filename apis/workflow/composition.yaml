@@ -61,47 +61,15 @@ spec:
                 region: {{ $.observed.composite.resource.spec.forProvider.region }}
             {{ toYaml $resource.spec.spec.parameters | indent 4 }}
             {{- end }}
-
-            ---
-
-            {{- range $ptfn := (default list $resource.dependencies) }}
-            apiVersion: pt.fn.crossplane.io/v1beta1
-            kind: Resources
-            metadata:
-              name: ptfn-{{ $resource.name }}-{{ $ptfn.source.name }}
-              namespace: {{ default "default" $.observed.composite.resource.metadata.namespace }}
-              annotations:
-                {{ setResourceNameAnnotation (printf "ptfn-%s-%s" $resource.name $ptfn.source.name) }}
-              labels:
-                elemental.aws.livewyer.io/workflow: {{ $.observed.composite.resource.metadata.name }}
-            resources:
-              - name: {{ $ptfn.source.name }}
-                patches:
-                  - type: FromCompositeFieldPath
-                    fromFieldPath: "{{ $ptfn.source.field }}"
-                    toFieldPath: "status.atProvider.arn"
-              - name: {{ $resource.name }}
-                patches:
-                  - type: FromCompositeFieldPath
-                    fromFieldPath: "status.atProvider.arn"
-                    toFieldPath: "{{ $ptfn.destination.field }}"
+            {{- range $dependency := (default list $resource.dependsOn) }}
+            {{/*
+            {{ printf "%s: %s" $dependency.key (index (index $.observed.resources $dependency.source.name) $dependency.source.key | toString) | indent 4 }}
+            */}}
+            {{ printf "%s: %s" $dependency.key (dig "resources" (regexReplaceAll "(.*)/(.*)" $dependency.source.apiVersion (printf "%s.${1}/%s" ($dependency.source.kind | lower) $dependency.source.name)) "resource" "status" "atProvider" "id" "" $.observed) | indent 4 }}
             {{- end }}
 
             {{- end }}
             {{- end }}
-
-    # - step: patch-and-transform
-    #   functionRef:
-    #     name: function-patch-and-transform
-    #   input:
-    #     apiVersion: pt.fn.crossplane.io/v1beta1
-    #     kind: Resources
-    #     resources:
-    #       - name:
-    #         patches:
-    #           - type: FromCompositeFieldPath
-    #             fromFieldPath: status.forProvider.arn
-    #             toFieldPath: spec.parameters.placementArn
 
     - step: automatically-detect-ready-composed-resources
       functionRef:

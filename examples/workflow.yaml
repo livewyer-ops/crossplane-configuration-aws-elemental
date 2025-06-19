@@ -15,37 +15,38 @@ spec:
         - name: mediaconnect-gateway-a
           spec:
             apiVersion: mediaconnect.aws.livewyer.io/v1alpha1
-            kind: Gateway
+            kind: XGateway
             spec:
               parameters:
                 egressCidrBlocks:
                   - 88.98.197.180/32
                 networks:
-                  - Name: home
+                  - Name: onprem-a
                     CidrBlock: 88.98.197.180/32
         - name: mediaconnect-gateway-b
           spec:
             apiVersion: mediaconnect.aws.livewyer.io/v1alpha1
-            kind: Gateway
+            kind: XGateway
             spec:
               parameters:
                 egressCidrBlocks:
                   - 88.98.197.180/32
                 networks:
-                  - Name: home
+                  - Name: onprem-b
                     CidrBlock: 88.98.197.180/32
     - name: mediaconnect-bridge
       resources:
         - name: mediaconnect-bridge-a
-          dependencies:
-            - source:
+          dependsOn:
+            - key: placementArn
+              source:
                 name: mediaconnect-gateway-a
-                field: status.atProvider.id
-              destination:
-                field: spec.parameters.placementArn
+                apiVersion: mediaconnect.aws.livewyer.io/v1alpha1
+                kind: XGateway
+                key: status.atProvider.id
           spec:
             apiVersion: mediaconnect.aws.livewyer.io/v1alpha1
-            kind: Bridge
+            kind: XBridge
             spec:
               parameters:
                 ingressGatewayBridge:
@@ -61,17 +62,17 @@ spec:
                 sourceFailoverConfig:
                   State: ENABLED
                   FailoverMode: FAILOVER
-                placementArn: ""
         - name: mediaconnect-bridge-b
-          dependencies:
-            - source:
+          dependsOn:
+            - key: placementArn
+              source:
                 name: mediaconnect-gateway-b
-                field: status.atProvider.id
-              destination:
-                field: spec.parameters.placementArn
+                apiVersion: mediaconnect.aws.livewyer.io/v1alpha1
+                kind: XGateway
+                key: status.atProvider.id
           spec:
             apiVersion: mediaconnect.aws.livewyer.io/v1alpha1
-            kind: Bridge
+            kind: XBridge
             spec:
               parameters:
                 ingressGatewayBridge:
@@ -87,4 +88,3 @@ spec:
                 sourceFailoverConfig:
                   State: ENABLED
                   FailoverMode: FAILOVER
-                placementArn: ""
