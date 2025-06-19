@@ -21,7 +21,7 @@ metadata:
 spec:
   providerConfigRef:
     name: aws
-  parameters:
+  forProvider:
     region: us-east-1
     channelId: mediapackage-channel
     origination: ALLOW

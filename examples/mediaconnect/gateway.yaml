@@ -1,13 +1,13 @@
 apiVersion: mediaconnect.aws.livewyer.io/v1alpha1
 kind: Gateway
 metadata:
-  name: gw-test
+  name: mediaconnect-gateway-a
   labels:
-    mediaconnect.aws.livewyer.io/gateway: gw-test
+    mediaconnect.aws.livewyer.io/gateway: mediaconnect-gateway-a
 spec:
   providerConfigRef:
     name: aws
-  parameters:
+  forProvider:
     region: us-east-1
     egressCidrBlocks:
       - 10.10.0.100

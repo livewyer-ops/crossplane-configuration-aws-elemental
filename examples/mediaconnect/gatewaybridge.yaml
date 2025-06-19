@@ -1,13 +1,13 @@
 apiVersion: mediaconnect.aws.livewyer.io/v1alpha1
 kind: Bridge
 metadata:
-  name: gwb-test
+  name: mediaconnect-bridge-a
   labels:
-    mediaconnect.aws.livewyer.io/bridge: gwb-test
+    mediaconnect.aws.livewyer.io/bridge: mediaconnect-bridge-a
 spec:
   providerConfigRef:
     name: aws
-  parameters:
+  forProvider:
     region: us-east-1
     ingressGatewayBridge:
       MaxOutputs: 2

@@ -21,7 +21,7 @@ spec:
             spec:
               type: object
               properties:
-                parameters:
+                forProvider:
                   type: object
                   properties:
                     ipPools:
@@ -122,7 +122,7 @@ spec:
                   type: string
                   description: "WriteConnectionSecretsToNamespace specifies the namespace in which the connection secrets of this managed resource should be written."
               required:
-                - parameters
+                - forProvider
             status:
               type: object
               properties:

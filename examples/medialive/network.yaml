@@ -7,7 +7,7 @@ metadata:
 spec:
   providerConfigRef:
     name: aws
-  parameters:
+  forProvider:
     region: us-east-1
     ipPools:
       - Cidr: 192.168.254.10/32

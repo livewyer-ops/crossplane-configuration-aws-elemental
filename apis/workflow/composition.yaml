@@ -1,0 +1,138 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: workflow.elemental.aws.livewyer.io
+spec:
+  compositeTypeRef:
+    apiVersion: elemental.aws.livewyer.io/v1alpha1
+    kind: XWorkflow
+  mode: Pipeline
+  pipeline:
+    - step: go-templating
+      functionRef:
+        name: function-go-templating
+      input:
+        apiVersion: gotemplating.fn.crossplane.io/v1beta1
+        kind: GoTemplate
+        source: Inline
+        inline:
+          template: |
+            {{- define "setNestedValue" -}}
+            {{- $dict := index . 0 -}}
+            {{- $path := index . 1 -}}
+            {{- $pathType := index . 2 -}}
+            {{- $value := index . 3 -}}
+            {{- $subKey := index . 4 -}}
+            {{- $subKeyMerge := index . 5 -}}
+            {{- $parts := regexSplit "\\." $path -1 -}}
+            {{- if eq (len $parts) 1 -}}
+                {{- if eq $pathType "list" -}}
+                  {{- if eq $subKey "null" -}}
+                    {{- $valueList := dig (first $parts) list $dict -}}
+                    {{- $_ := set $dict (first $parts) (append $valueList $value) -}}
+                  {{- else -}}
+                    {{- if eq (len (regexSplit "\\." $subKey -1)) 1 -}}
+                      {{- if eq $subKeyMerge "merge" -}}
+                        {{- $subValue := first (dig (first $parts) list $dict) -}}
+                        {{- $_ := set $dict (first $parts) (list (merge $subValue (dict $subKey $value))) -}}
+                      {{- else -}}
+                        {{- $valueList := dig (first $parts) list $dict -}}
+                        {{- $valueDict := dict $subKey $value -}}
+                        {{- $_ := set $dict (first $parts) (append $valueList $valueDict) -}}
+                      {{- end -}}
+                    {{- else -}}
+                      {{- $subValue := first (dig (first $parts) list $dict) -}}
+                      {{- $subKeyParts := regexSplit "\\." $subKey -1 -}}
+                      {{- $subKeyFirst := first $subKeyParts -}}
+                      {{- if not (hasKey $subValue $subKeyFirst) -}}
+                        {{- $_ := set $subValue $subKeyFirst (dict) -}}
+                      {{- else if eq (len (rest $subKeyParts)) 1 -}}
+                        {{- $_ := set $subValue $subKeyFirst (dig $subKeyFirst dict $subValue) -}}
+                        {{- $_ := set (dig $subKeyFirst dict $subValue) (first (rest $subKeyParts)) $value -}}
+                      {{- else -}}
+                        {{- $_ := set (dig $subKeyFirst dict $subValue) (first (rest $subKeyParts)) dict -}}
+                        {{- template "setNestedValue" (list $dict (join "." (rest (rest ($subKeyParts)))) $pathType $value $subKey $subKeyMerge) -}}
+                      {{- end -}}
+                    {{- end -}}
+                  {{- end -}}
+                {{- else -}}
+                  {{- $_ := set $dict (first $parts) $value -}}
+                {{- end -}}
+            {{- else -}}
+              {{- $firstKey := first $parts -}}
+              {{- if not (hasKey $dict $firstKey) -}}
+                {{- $_ := set $dict $firstKey (dict) -}}
+              {{- end -}}
+              {{- template "setNestedValue" (list (index $dict $firstKey) (join "." (rest $parts)) $pathType $value $subKey $subKeyMerge) -}}
+            {{- end -}}
+            {{- end -}}
+
+            {{- define "digNestedPath" -}}
+            {{- $path := index . 0 -}}
+            {{- $dict := index . 1 -}}
+            {{- $parts := regexSplit "\\." $path -1 -}}
+            {{- if eq (len $parts) 1 -}}
+              {{- dig (first $parts) "" $dict -}}
+            {{- else -}}
+              {{- template "digNestedPath" (list (join "." (rest $parts)) (dig (first $parts) dict $dict)) -}}
+            {{- end -}}
+            {{- end -}}
+
+            {{- range $step := .observed.composite.resource.spec.steps }}
+            {{- range $resource := $step.resources }}
+            {{- $spec := (dig "spec" (dict) $resource.spec) }}
+            {{- $parameters := (dig "spec" "forProvider" dict $resource.spec) }}
+            {{- $resourceId := regexReplaceAll "(.*)/(.*)" $resource.spec.apiVersion (printf "%s.${1}/%s" ($resource.spec.kind | lower) $resource.name) }}
+
+            ---
+
+            apiVersion: {{ $resource.spec.apiVersion }}
+            kind: {{ $resource.spec.kind }}
+            metadata:
+              name: {{ $resource.name }}
+              namespace: {{ default "default" $.observed.composite.resource.metadata.namespace }}
+              annotations:
+                {{ setResourceNameAnnotation $resourceId }}
+              labels:
+                elemental.aws.livewyer.io/workflow: {{ $.observed.composite.resource.metadata.name }}
+                {{ regexReplaceAll "(.*)/(.*)" $resource.spec.apiVersion (printf "${1}/%s" $resource.spec.kind | lower) }}: {{ $resource.name }}
+            spec:
+            {{- if $spec.providerConfigRef }}
+              providerConfigRef:
+            {{ toYaml $spec.providerConfigRef | indent 4 }}
+            {{- else }}
+              providerConfigRef:
+            {{ toYaml $.observed.composite.resource.spec.providerConfigRef | indent 4 }}
+            {{- end }}
+            {{- if $spec.deletionPolicy }}
+              deletionPolicy: {{ $spec.deletionPolicy }}
+            {{- end }}
+            {{- if $spec.managementPolicies }}
+              managementPolicies:
+            {{ toYaml $spec.managementPolicies | indent 4 }}
+            {{- end }}
+            {{- if $spec.publishConnectionDetailsTo }}
+              publishConnectionDetailsTo:
+            {{ toYaml $spec.publishConnectionDetailsTo | indent 4 }}
+            {{- end }}
+            {{- if $spec.writeConnectionSecretsToNamespace }}
+              writeConnectionSecretsToNamespace: {{ $spec.writeConnectionSecretsToNamespace }}
+            {{- end }}
+              forProvider:
+            {{- if not $parameters.region }}
+            {{- template "setNestedValue" (list $parameters "region" "" $.observed.composite.resource.spec.forProvider.region "" "") }}
+            {{- end }}
+            {{- range $depend := (default list $resource.dependsOn) }}
+            {{- $dependResourceId := regexReplaceAll "(.*)/(.*)" $depend.source.apiVersion (printf "%s.${1}/%s" ($depend.source.kind | lower) $depend.source.name) }}
+            {{- $dependResource := dig "resources" $dependResourceId "resource" dict $.observed }}
+            {{- $dependResourceValue := include "digNestedPath" (list $depend.source.key $dependResource) -}}
+            {{- template "setNestedValue" (list $parameters $depend.key $depend.type $dependResourceValue (default "null" $depend.subKey) (default "" $depend.subKeyPatchMethod)) }}
+            {{- end }}
+            {{ toYaml $parameters | indent 4 }}
+
+            {{- end }}
+            {{- end }}
+
+    - step: automatically-detect-ready-composed-resources
+      functionRef:
+        name: function-auto-ready

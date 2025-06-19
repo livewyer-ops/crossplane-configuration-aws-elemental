@@ -18,7 +18,7 @@ spec:
         inline:
           template: |
             {{ $id := .observed.composite.resource.metadata.name -}}
-            {{ $spec := .observed.composite.resource.spec.parameters -}}
+            {{ $spec := .observed.composite.resource.spec.forProvider -}}
             {{ $status := getCompositeResource . | getResourceCondition "atProvider" }}
 
             apiVersion: cloudcontrol.aws.upbound.io/v1beta1
@@ -84,7 +84,9 @@ spec:
               labels:
                 mediaconnect.aws.livewyer.io/flow: {{ $id }}
             status:
-              atProvider: {{ toJson $awscc.status.atProvider }}
+              {{- $properties := dict }}
+              {{- $properties := (fromJson (default "{}" $awscc.status.atProvider.properties)) }}
+              atProvider: {{ toJson (merge $awscc.status.atProvider (dict "flowAvailabilityZone" (dig "FlowAvailabilityZone" "" $properties))) }}
 
     - step: automatically-detect-ready-composed-resources
       functionRef:

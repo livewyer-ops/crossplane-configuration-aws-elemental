@@ -18,7 +18,7 @@ spec:
         inline:
           template: |
             {{ $id := .observed.composite.resource.metadata.name -}}
-            {{ $spec := .observed.composite.resource.spec.parameters -}}
+            {{ $spec := .observed.composite.resource.spec.forProvider -}}
 
             apiVersion: cloudformation.aws.upbound.io/v1beta1
             kind: Stack
