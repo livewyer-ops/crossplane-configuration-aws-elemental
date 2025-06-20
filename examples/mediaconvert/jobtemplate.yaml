@@ -7,7 +7,7 @@ metadata:
 spec:
   providerConfigRef:
     name: aws
-  parameters:
+  forProvider:
     region: us-east-1
     queue: arn:aws:mediaconvert:us-east-1:627399506400:queues/mediaconvert-queue-b
     outputGroups:
