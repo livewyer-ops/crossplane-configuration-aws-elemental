@@ -17,7 +17,7 @@ spec:
             apiVersion: mediaconnect.aws.livewyer.io/v1alpha1
             kind: XGateway
             spec:
-              parameters:
+              forProvider:
                 egressCidrBlocks:
                   - 88.98.197.180/32
                 networks:
@@ -28,7 +28,7 @@ spec:
             apiVersion: mediaconnect.aws.livewyer.io/v1alpha1
             kind: XGateway
             spec:
-              parameters:
+              forProvider:
                 egressCidrBlocks:
                   - 88.98.197.180/32
                 networks:
@@ -49,7 +49,7 @@ spec:
             apiVersion: mediaconnect.aws.livewyer.io/v1alpha1
             kind: XBridge
             spec:
-              parameters:
+              forProvider:
                 ingressGatewayBridge:
                   MaxOutputs: 2
                   MaxBitrate: 80000000
@@ -75,7 +75,7 @@ spec:
             apiVersion: mediaconnect.aws.livewyer.io/v1alpha1
             kind: XBridge
             spec:
-              parameters:
+              forProvider:
                 ingressGatewayBridge:
                   MaxOutputs: 2
                   MaxBitrate: 80000000
@@ -94,7 +94,7 @@ spec:
       resources:
         - name: mediaconnect-flow-a
           dependsOn:
-            - key: GatewayBridgeSource.BridgeArn
+            - key: source.GatewayBridgeSource.BridgeArn
               source:
                 name: mediaconnect-bridge-a
                 apiVersion: mediaconnect.aws.livewyer.io/v1alpha1
@@ -104,11 +104,11 @@ spec:
             apiVersion: mediaconnect.aws.livewyer.io/v1alpha1
             kind: XFlow
             spec:
-              parameters:
+              forProvider:
                 flowSize: MEDIUM
         - name: mediaconnect-flow-b
           dependsOn:
-            - key: GatewayBridgeSource.BridgeArn
+            - key: source.GatewayBridgeSource.BridgeArn
               source:
                 name: mediaconnect-bridge-a
                 apiVersion: mediaconnect.aws.livewyer.io/v1alpha1
@@ -118,5 +118,71 @@ spec:
             apiVersion: mediaconnect.aws.livewyer.io/v1alpha1
             kind: XFlow
             spec:
-              parameters:
+              forProvider:
                 flowSize: MEDIUM
+
+    - name: medialive-network
+      resources:
+        - name: medialive-network-sg
+          spec:
+            apiVersion: medialive.aws.upbound.io/v1beta1
+            kind: InputSecurityGroup
+            spec:
+              forProvider:
+                whitelistRules:
+                  - cidr: 88.98.197.180/32
+
+    - name: medialive-multiplex
+      resources:
+        - name: medialive-multiplex-a
+          dependsOn:
+            - key: availabilityZones[0]
+              source:
+                name: mediaconnect-flow-a
+                apiVersion: mediaconnect.aws.livewyer.io/v1alpha1
+                kind: XFlow
+                key: status.atProvider.id
+            - key: availabilityZones[1]
+              source:
+                name: mediaconnect-flow-b
+                apiVersion: mediaconnect.aws.livewyer.io/v1alpha1
+                kind: XFlow
+                key: status.atProvider.id
+          spec:
+            apiVersion: medialive.aws.upbound.io/v1beta2
+            kind: Multiplex
+            spec:
+              forProvider:
+                name: multiplex-a
+                multiplexSettings:
+                  maximumVideoBufferDelayMilliseconds: 1000
+                  transportStreamBitrate: 1000000
+                  transportStreamId: 1
+                  transportStreamReservedBitrate: 1
+                startMultiplex: true
+        - name: medialive-multiplex-b
+          dependsOn:
+            - key: availabilityZones[0]
+              source:
+                name: mediaconnect-flow-a
+                apiVersion: mediaconnect.aws.livewyer.io/v1alpha1
+                kind: XFlow
+                key: "{{ (fromJson status.atProvider.properties).FlowAvailabilityZone }}"
+            - key: availabilityZones[1]
+              source:
+                name: mediaconnect-flow-b
+                apiVersion: mediaconnect.aws.livewyer.io/v1alpha1
+                kind: XFlow
+                key: "{{ (fromJson status.atProvider.properties).FlowAvailabilityZone }}"
+          spec:
+            apiVersion: medialive.aws.upbound.io/v1beta2
+            kind: Multiplex
+            spec:
+              forProvider:
+                name: multiplex-b
+                multiplexSettings:
+                  maximumVideoBufferDelayMilliseconds: 1000
+                  transportStreamBitrate: 1000000
+                  transportStreamId: 1
+                  transportStreamReservedBitrate: 1
+                startMultiplex: true

@@ -17,10 +17,28 @@ spec:
         source: Inline
         inline:
           template: |
+            {{- define "setNestedValue" -}}
+            {{- $dict := index . 0 -}}
+            {{- $path := index . 1 -}}
+            {{- $value := index . 2 -}}
+            {{- $parts := regexSplit "\\." $path -1 -}}
+            {{- if eq (len $parts) 1 -}}
+              {{- $_ := set $dict (first $parts) $value -}}
+            {{- else -}}
+              {{- $firstKey := first $parts -}}
+              {{- $remainingParts := rest $parts -}}
+              {{- $remainingPath := join "." $remainingParts -}}
+              {{- if not (hasKey $dict $firstKey) -}}
+                {{- $_ := set $dict $firstKey (dict) -}}
+              {{- end -}}
+              {{- template "setNestedValue" (list (index $dict $firstKey) $remainingPath $value) -}}
+            {{- end -}}
+            {{- end -}}
+
             {{- range $step := .observed.composite.resource.spec.steps }}
             {{- range $resource := $step.resources }}
             {{- $spec := (dig "spec" (dict) $resource.spec) }}
-            {{- $parameters := (dig "spec" "parameters" (dict) $resource.spec) }}
+            {{- $parameters := (dig "spec" "forProvider" dict $resource.spec) }}
 
             ---
 
@@ -56,21 +74,14 @@ spec:
             {{- if $spec.writeConnectionSecretsToNamespace }}
               writeConnectionSecretsToNamespace: {{ $spec.writeConnectionSecretsToNamespace }}
             {{- end }}
-              parameters:
-            {{/*
-            {{- range $depend := (default list $resource.dependsOn) }}
-            {{ $mergedParams := mergeOverwrite $parameters (dict $depend.key (dig "resources" (regexReplaceAll "(.*)/(.*)" $depend.source.apiVersion (printf "%s.${1}/%s" ($depend.source.kind | lower) $depend.source.name)) "resource" "status" "atProvider" "id" "" $.observed)) }}
-            {{- end }}
-            */}}
-            {{- if $parameters.region }}
-            {{ toYaml $parameters | indent 4 }}
-            {{- else }}
-                region: {{ $.observed.composite.resource.spec.forProvider.region }}
-            {{ toYaml $parameters | indent 4 }}
+              forProvider:
+            {{- if not $parameters.region }}
+            {{- template "setNestedValue" (list $parameters "region" $.observed.composite.resource.spec.forProvider.region) }}
             {{- end }}
             {{- range $depend := (default list $resource.dependsOn) }}
-                {{ $depend.key }}: {{ dig "resources" (regexReplaceAll "(.*)/(.*)" $depend.source.apiVersion (printf "%s.${1}/%s" ($depend.source.kind | lower) $depend.source.name)) "resource" "status" "atProvider" "id" "" $.observed }}
+            {{- template "setNestedValue" (list $parameters $depend.key (dig "resources" (regexReplaceAll "(.*)/(.*)" $depend.source.apiVersion (printf "%s.${1}/%s" ($depend.source.kind | lower) $depend.source.name)) "resource" "status" "atProvider" "id" "" $.observed)) }}
             {{- end }}
+            {{ toYaml $parameters | indent 4 }}
 
             {{- end }}
             {{- end }}
