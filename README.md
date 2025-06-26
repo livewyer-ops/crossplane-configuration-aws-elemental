@@ -1,2 +1,327 @@
-# crossplane-configuration-aws-elemental
-Crossplane Composite Resource Definitions (XRDs) package for AWS Elemental media services on Kubernetes
+# Crossplane Configuration for AWS Elemental
+
+A comprehensive Crossplane Configuration package that provides Composite Resource Definitions (XRDs) for AWS Elemental media services on Kubernetes.
+
+## Overview
+
+This configuration package enables you to provision and manage AWS Elemental media services infrastructure using Kubernetes-native APIs through Crossplane. It provides high-level abstractions for complex media workflows while maintaining the flexibility and power of AWS Elemental services.
+
+## Supported AWS Elemental Services
+
+- **AWS Elemental MediaConnect** - Secure, reliable live video transport
+- **AWS Elemental MediaConvert** - File-based video transcoding service
+- **AWS Elemental MediaLive** - Live video processing service
+- **AWS Elemental MediaPackage** - Video origination and packaging service
+- **AWS Elemental MediaPackage V2** - Next-generation video packaging
+- **AWS Elemental MediaStore** - Storage service optimized for media
+- **AWS Elemental MediaTailor** - Video personalization and monetization
+
+## Features
+
+- **Workflow Orchestration**: Define complex media workflows with dependencies and sequencing
+- **Multi-Service Integration**: Seamless integration between different AWS Elemental services
+- **Kubernetes Native**: Manage media infrastructure using familiar Kubernetes tooling
+- **GitOps Ready**: Version control and automate media infrastructure deployments
+- **Composition Functions**: Advanced resource composition using Go templating and transformation functions
+
+## Prerequisites
+
+Before using this configuration, ensure you have:
+
+1. **Kubernetes Cluster** (v1.20+)
+2. **Crossplane** (v1.20.0+) installed in your cluster
+3. **AWS Account** with appropriate permissions for Elemental services
+4. **AWS CLI** configured (for initial setup)
+
+## Installation
+
+### 1. Install Crossplane
+
+If you haven't already installed Crossplane:
+
+```bash
+helm repo add crossplane-stable https://charts.crossplane.io/stable
+helm repo update
+helm install crossplane crossplane-stable/crossplane \
+  --namespace crossplane-system \
+  --create-namespace
+```
+
+### 2. Install Required Providers and Functions
+
+The configuration will automatically install dependencies, but you can install them manually:
+
+```bash
+# Apply the functions
+kubectl apply -f examples/functions.yaml
+
+# The following providers will be installed automatically:
+# - xpkg.upbound.io/upbound/provider-family-aws
+# - xpkg.upbound.io/upbound/provider-aws-cloudcontrol
+# - xpkg.upbound.io/upbound/provider-aws-medialive
+# - xpkg.upbound.io/upbound/provider-aws-mediapackage
+# - xpkg.upbound.io/upbound/provider-aws-mediastore
+# - xpkg.upbound.io/upbound/provider-aws-cloudformation
+```
+
+### 3. Install the Configuration
+
+```bash
+kubectl apply -f - <<EOF
+apiVersion: pkg.crossplane.io/v1
+kind: Configuration
+metadata:
+  name: configuration-aws-elemental
+spec:
+  package: xpkg.upbound.io/livewyer-ops/configuration-aws-elemental:latest
+EOF
+```
+
+### 4. Apply RBAC Permissions
+
+```bash
+kubectl apply -f examples/rbac.yaml
+```
+
+## Environment Setup
+
+### AWS ProviderConfig Setup
+
+Create AWS credentials and configure the provider:
+
+#### Option 1: Using AWS Access Keys
+
+1. Create an AWS IAM user with the following managed policies:
+   - `AmazonElasticTranscoder_FullAccess`
+   - `AWSElementalMediaConvertFullAccess`
+   - `AWSElementalMediaLiveFullAccess`
+   - `AWSElementalMediaPackageFullAccess`
+   - `AWSElementalMediaStoreFullAccess`
+   - Custom policy for MediaConnect (see below)
+
+2. Create a Kubernetes Secret with AWS credentials:
+
+```bash
+kubectl create secret generic aws-secret -n crossplane-system \
+  --from-literal=creds='[default]
+aws_access_key_id = YOUR_ACCESS_KEY_ID
+aws_secret_access_key = YOUR_SECRET_ACCESS_KEY'
+```
+
+3. Create the ProviderConfig:
+
+```bash
+kubectl apply -f - <<EOF
+apiVersion: aws.upbound.io/v1beta1
+kind: ProviderConfig
+metadata:
+  name: aws
+spec:
+  credentials:
+    source: Secret
+    secretRef:
+      namespace: crossplane-system
+      name: aws-secret
+      key: creds
+EOF
+```
+
+#### Option 2: Using IAM Roles for Service Accounts (IRSA) - Recommended for EKS
+
+1. Create an IAM role with the required policies
+2. Associate the role with a Kubernetes service account:
+
+```bash
+kubectl apply -f - <<EOF
+apiVersion: aws.upbound.io/v1beta1
+kind: ProviderConfig
+metadata:
+  name: aws
+spec:
+  credentials:
+    source: InjectedIdentity
+EOF
+```
+
+### Required IAM Permissions
+
+Create a custom IAM policy for MediaConnect and other services:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "mediaconnect:*",
+        "medialive:*",
+        "mediapackage:*",
+        "mediapackagev2:*",
+        "mediastore:*",
+        "mediaconvert:*",
+        "mediatailor:*",
+        "cloudformation:*",
+        "iam:PassRole",
+        "iam:CreateRole",
+        "iam:CreatePolicy",
+        "iam:AttachRolePolicy",
+        "iam:ListRoles",
+        "iam:GetRole",
+        "iam:GetPolicy",
+        "ec2:DescribeVpcs",
+        "ec2:DescribeSubnets",
+        "ec2:DescribeSecurityGroups",
+        "ec2:CreateSecurityGroup",
+        "ec2:AuthorizeSecurityGroupIngress",
+        "logs:CreateLogGroup",
+        "logs:CreateLogStream",
+        "logs:PutLogEvents"
+      ],
+      "Resource": "*"
+    }
+  ]
+}
+```
+
+## Usage Examples
+
+### Basic MediaLive Network
+
+```yaml
+apiVersion: medialive.aws.livewyer.io/v1alpha1
+kind: Network
+metadata:
+  name: my-media-network
+spec:
+  providerConfigRef:
+    name: aws
+  forProvider:
+    region: us-east-1
+    ipPools:
+      - Cidr: 192.168.1.0/24
+```
+
+### MediaConnect Flow
+
+```yaml
+apiVersion: mediaconnect.aws.livewyer.io/v1alpha1
+kind: Flow
+metadata:
+  name: my-media-flow
+spec:
+  providerConfigRef:
+    name: aws
+  forProvider:
+    region: us-east-1
+    flowSize: 1000
+```
+
+### Complex Workflow
+
+See the complete workflow example at [`examples/workflow.yaml`](examples/workflow.yaml) which demonstrates:
+
+- MediaConnect bridge and flow setup
+- MediaLive input security groups and inputs
+- MediaLive multiplex and channels
+- MediaPackage channel and origin endpoint integration
+
+## Configuration Structure
+
+```
+├── apis/                    # Composite Resource Definitions
+│   ├── mediaconnect/       # MediaConnect XRDs
+│   ├── mediaconvert/       # MediaConvert XRDs
+│   ├── medialive/          # MediaLive XRDs
+│   ├── mediapackage/       # MediaPackage XRDs
+│   ├── mediapackagev2/     # MediaPackage V2 XRDs
+│   ├── mediastore/         # MediaStore XRDs
+│   ├── mediatailor/        # MediaTailor XRDs
+│   └── workflow/           # Workflow orchestration XRDs
+├── examples/               # Usage examples
+├── functions/              # Composition functions
+└── tests/                  # Test configurations
+```
+
+## Dependencies
+
+This configuration automatically installs the following dependencies:
+
+### Providers
+
+- `xpkg.upbound.io/upbound/provider-family-aws` (>=v1)
+- `xpkg.upbound.io/upbound/provider-aws-cloudcontrol` (>=v1)
+- `xpkg.upbound.io/upbound/provider-aws-medialive` (>=v1)
+- `xpkg.upbound.io/upbound/provider-aws-mediapackage` (>=v1)
+- `xpkg.upbound.io/upbound/provider-aws-mediastore` (>=v1)
+- `xpkg.upbound.io/upbound/provider-aws-cloudformation` (>=v1)
+
+### Functions
+
+- `xpkg.upbound.io/upbound/function-patch-and-transform` (>=v0.9.0)
+- `xpkg.upbound.io/upbound/function-go-templating` (>=v0.10.0)
+- `xpkg.upbound.io/upbound/function-auto-ready` (>=v0.5.0)
+- `xpkg.upbound.io/crossplane-contrib/function-status-transformer` (>=v0.4.1)
+- `xpkg.upbound.io/crossplane-contrib/function-sequencer` (>=v0.2.3)
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Provider not ready**: Wait for all providers to be installed and healthy
+
+   ```bash
+   kubectl get providers
+   ```
+
+2. **Missing permissions**: Ensure your AWS credentials have all required permissions
+
+3. **Region availability**: Some AWS Elemental services are not available in all regions
+
+4. **Resource dependencies**: Check that dependent resources are created in the correct order
+
+### Debugging
+
+Enable debug logging for providers:
+
+```bash
+kubectl patch deployment crossplane -n crossplane-system -p '{"spec":{"template":{"spec":{"containers":[{"name":"crossplane","args":["--debug"]}]}}}}'
+```
+
+Check resource status:
+
+```bash
+kubectl describe <resource-type> <resource-name>
+```
+
+## Contributing
+
+We welcome contributions! Please see our contributing guidelines and:
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add/update tests
+5. Submit a pull request
+
+## Support
+
+For support and questions:
+
+- Create an issue in this repository
+- Contact: bowen@livewyer.com
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Acknowledgments
+
+- [Crossplane](https://crossplane.io/) for the amazing cloud-native control plane
+- [Upbound](https://upbound.io/) for the AWS provider ecosystem
+- AWS Elemental team for the comprehensive media services
+
+---
+
+**Maintained by**: [Livewyer](https://livewyer.com)
+**Source**: [github.com/livewyer-ops/crossplane-configuration-aws-elemental](https://github.com/livewyer-ops/crossplane-configuration-aws-elemental)
