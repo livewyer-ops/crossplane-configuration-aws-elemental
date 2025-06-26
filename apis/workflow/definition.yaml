@@ -20,6 +20,152 @@ spec:
           properties:
             spec:
               type: object
+              properties:
+                steps:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                        description: "Workflow step name"
+                      resources:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            name:
+                              type: string
+                              description: "Name of the resource"
+                            spec:
+                              type: object
+                              x-kubernetes-preserve-unknown-fields: true
+                            dependsOn:
+                              type: array
+                              description: "Current resource dependencies and search/replace path, key, values, etc."
+                              items:
+                                type: object
+                                properties:
+                                  key:
+                                    type: string
+                                    description: "Path to key/value pair to search"
+                                  type:
+                                    type: string
+                                    description: "Data structure to use to inject the dependent resource value"
+                                  source:
+                                    type: object
+                                    description: "The resource current object depends on"
+                                    properties:
+                                      name:
+                                        type: string
+                                        description: "Dependent resource name"
+                                      apiVersion:
+                                        type: string
+                                        description: "Dependent resource API version"
+                                      kind:
+                                        type: string
+                                        description: "Dependent resource kind"
+                                      key:
+                                        type: string
+                                        description: "Search path of the dependent resource"
+                                x-kubernetes-preserve-unknown-fields: true
+                forProvider:
+                  type: object
+                  x-kubernetes-preserve-unknown-fields: true
+                deletionPolicy:
+                  type: string
+                  enum:
+                    - Delete
+                    - Orphan
+                  default: Delete
+                  description: "DeletionPolicy specifies what will happen to the underlying external when this managed resource is deleted."
+                managementPolicies:
+                  type: array
+                  items:
+                    type: string
+                    enum:
+                      - "*"
+                      - Create
+                      - Update
+                      - Delete
+                      - LateInitialize
+                      - Observe
+                  default: ["*"]
+                  description: "ManagementPolicies specify the array of actions Crossplane is allowed to take on the managed and external resources."
+                providerConfigRef:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                  required:
+                    - name
+                  description: "ProviderConfigReference specifies how the provider that will be used to create, observe, update, and delete this managed resource should be configured."
+                publishConnectionDetailsTo:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                    configRef:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                      required:
+                        - name
+                    metadata:
+                      type: object
+                      properties:
+                        labels:
+                          type: object
+                          additionalProperties:
+                            type: string
+                        annotations:
+                          type: object
+                          additionalProperties:
+                            type: string
+                        type:
+                          type: array
+                          items:
+                            type: string
+                  required:
+                    - name
+                  description: "PublishConnectionDetailsTo specifies the connection secret config which contains a name, metadata and a reference to secret store config to which any connection details for this managed resource should be written."
+                writeConnectionSecretsToNamespace:
+                  type: string
+                  description: "WriteConnectionSecretsToNamespace specifies the namespace in which the connection secrets of this managed resource should be written."
+              required:
+                - steps
+              x-kubernetes-preserve-unknown-fields: true
+            status:
+              type: object
+              properties:
+                conditions:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      lastTransitionTime:
+                        type: string
+                        format: date-time
+                      message:
+                        type: string
+                      reason:
+                        type: string
+                      status:
+                        type: string
+                      type:
+                        type: string
+                    required:
+                      - lastTransitionTime
+                      - reason
+                      - status
+                      - type
+                connectionDetails:
+                  type: object
+                  properties:
+                    lastPublishedTime:
+                      type: string
+                      format: date-time
               x-kubernetes-preserve-unknown-fields: true
           required:
             - spec
