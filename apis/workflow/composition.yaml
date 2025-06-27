@@ -31,6 +31,7 @@ spec:
                     {{- $valueList := dig (first $parts) list $dict -}}
                     {{- $_ := set $dict (first $parts) (append $valueList $value) -}}
                   {{- else -}}
+                    {{/* TODO: review and optimize the steps to set complex nested value structure */}}
                     {{- if eq (len (regexSplit "\\." $subKey -1)) 1 -}}
                       {{- if eq $subKeyMerge "merge" -}}
                         {{- $subValue := first (dig (first $parts) list $dict) -}}
