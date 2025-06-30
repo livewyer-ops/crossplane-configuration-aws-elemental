@@ -30,5 +30,7 @@ spec:
     source:
       Name: onprem-source-b
       WhitelistCidr: 192.168.0.100/32
-      SourceIngestPort: "4000"
+      IngestPort: 4000
       Protocol: rtp
+    sourceMonitoringConfig:
+      ThumbnailState: ENABLED

@@ -24,8 +24,6 @@ spec:
                   WhitelistCidr: 192.168.0.100/32
                   IngestPort: 3000
                   Protocol: rtp
-                sourceMonitoringConfig:
-                  ThumbnailState: ENABLED
         - name: mediaconnect-flow-b
           spec:
             apiVersion: mediaconnect.aws.livewyer.io/v1alpha1
@@ -38,8 +36,6 @@ spec:
                   WhitelistCidr: 192.168.0.100/32
                   IngestPort: 4000
                   Protocol: rtp
-                sourceMonitoringConfig:
-                  ThumbnailState: ENABLED
 
     - name: medialive-network
       resources:
@@ -54,7 +50,7 @@ spec:
 
     - name: medialive-input
       resources:
-        - name: medialive-input-a
+        - name: medialive-input-a1
           dependsOn:
             - key: mediaConnectFlows
               type: list
@@ -77,7 +73,35 @@ spec:
             kind: Input
             spec:
               forProvider:
-                name: medialive-input-a
+                name: medialive-input-a1
+                inputSecurityGroups:
+                  - medialive-network-sg
+                type: MEDIACONNECT
+                roleArn: arn:aws:iam::627399506400:role/MediaLiveAccessRole
+        - name: medialive-input-a2
+          dependsOn:
+            - key: mediaConnectFlows
+              type: list
+              subKey: flowArn
+              source:
+                name: mediaconnect-flow-a
+                apiVersion: mediaconnect.aws.livewyer.io/v1alpha1
+                kind: XFlow
+                key: status.atProvider.id
+            - key: mediaConnectFlows
+              type: list
+              subKey: flowArn
+              source:
+                name: mediaconnect-flow-b
+                apiVersion: mediaconnect.aws.livewyer.io/v1alpha1
+                kind: XFlow
+                key: status.atProvider.id
+          spec:
+            apiVersion: medialive.aws.upbound.io/v1beta2
+            kind: Input
+            spec:
+              forProvider:
+                name: medialive-input-a2
                 inputSecurityGroups:
                   - medialive-network-sg
                 type: MEDIACONNECT
@@ -282,9 +306,18 @@ spec:
                   inputResolution: UHD
                   maximumBitrate: MAX_50_MBPS
                 inputAttachments:
-                  - inputAttachmentName: medialive-input-a
+                  - inputAttachmentName: medialive-input-a1
                     inputIdRef:
-                      name: medialive-input-a
+                      name: medialive-input-a1
+                    inputSettings:
+                      captionSelector:
+                        - name: sample-caption
+                          languageCode: EN
+                          selectorSettings:
+                            embeddedSourceSettings: {}
+                  - inputAttachmentName: medialive-input-a2
+                    inputIdRef:
+                      name: medialive-input-a2
                     inputSettings:
                       captionSelector:
                         - name: sample-caption
