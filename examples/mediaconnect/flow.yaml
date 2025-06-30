@@ -3,7 +3,7 @@ kind: Flow
 metadata:
   name: flow-test-a
   labels:
-    mediaconnect.aws.livewyer.io/flow: flow-test
+    mediaconnect.aws.livewyer.io/flow: flow-test-a
 spec:
   providerConfigRef:
     name: aws
@@ -13,3 +13,22 @@ spec:
     source:
       GatewayBridgeSource:
         BridgeArn: ""
+
+---
+apiVersion: mediaconnect.aws.livewyer.io/v1alpha1
+kind: XFlow
+metadata:
+  name: flow-test-b
+  labels:
+    mediaconnect.aws.livewyer.io/flow: flow-test-b
+spec:
+  providerConfigRef:
+    name: aws
+  forProvider:
+    region: us-east-1
+    flowSize: MEDIUM
+    source:
+      Name: onprem-source-b
+      WhitelistCidr: 192.168.0.100/32
+      SourceIngestPort: "4000"
+      Protocol: rtp

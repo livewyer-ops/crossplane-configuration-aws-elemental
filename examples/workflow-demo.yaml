@@ -1,0 +1,521 @@
+apiVersion: elemental.aws.livewyer.io/v1alpha1
+kind: XWorkflow
+metadata:
+  name: workflow-demo
+  labels:
+    elemental.aws.livewyer.io/workflow: workflow-demo
+spec:
+  providerConfigRef:
+    name: aws
+  forProvider:
+    region: us-east-1
+  steps:
+    - name: mediaconnect-flow
+      resources:
+        - name: mediaconnect-flow-a
+          spec:
+            apiVersion: mediaconnect.aws.livewyer.io/v1alpha1
+            kind: XFlow
+            spec:
+              forProvider:
+                flowSize: MEDIUM
+                source:
+                  Name: onprem-source-a
+                  WhitelistCidr: 192.168.0.100/32
+                  IngestPort: 3000
+                  Protocol: rtp
+                sourceMonitoringConfig:
+                  ThumbnailState: ENABLED
+        - name: mediaconnect-flow-b
+          spec:
+            apiVersion: mediaconnect.aws.livewyer.io/v1alpha1
+            kind: XFlow
+            spec:
+              forProvider:
+                flowSize: MEDIUM
+                source:
+                  Name: onprem-source-b
+                  WhitelistCidr: 192.168.0.100/32
+                  IngestPort: 4000
+                  Protocol: rtp
+                sourceMonitoringConfig:
+                  ThumbnailState: ENABLED
+
+    - name: medialive-network
+      resources:
+        - name: medialive-network-sg
+          spec:
+            apiVersion: medialive.aws.upbound.io/v1beta1
+            kind: InputSecurityGroup
+            spec:
+              forProvider:
+                whitelistRules:
+                  - cidr: 192.168.0.100/32
+
+    - name: medialive-input
+      resources:
+        - name: medialive-input-a
+          dependsOn:
+            - key: mediaConnectFlows
+              type: list
+              subKey: flowArn
+              source:
+                name: mediaconnect-flow-a
+                apiVersion: mediaconnect.aws.livewyer.io/v1alpha1
+                kind: XFlow
+                key: status.atProvider.id
+            - key: mediaConnectFlows
+              type: list
+              subKey: flowArn
+              source:
+                name: mediaconnect-flow-b
+                apiVersion: mediaconnect.aws.livewyer.io/v1alpha1
+                kind: XFlow
+                key: status.atProvider.id
+          spec:
+            apiVersion: medialive.aws.upbound.io/v1beta2
+            kind: Input
+            spec:
+              forProvider:
+                name: medialive-input-a
+                inputSecurityGroups:
+                  - medialive-network-sg
+                type: MEDIACONNECT
+                roleArn: arn:aws:iam::627399506400:role/MediaLiveAccessRole
+        - name: medialive-input-b
+          dependsOn:
+            - key: mediaConnectFlows
+              type: list
+              subKey: flowArn
+              source:
+                name: mediaconnect-flow-a
+                apiVersion: mediaconnect.aws.livewyer.io/v1alpha1
+                kind: XFlow
+                key: status.atProvider.id
+            - key: mediaConnectFlows
+              type: list
+              subKey: flowArn
+              source:
+                name: mediaconnect-flow-b
+                apiVersion: mediaconnect.aws.livewyer.io/v1alpha1
+                kind: XFlow
+                key: status.atProvider.id
+          spec:
+            apiVersion: medialive.aws.upbound.io/v1beta2
+            kind: Input
+            spec:
+              forProvider:
+                name: medialive-input-b
+                inputSecurityGroups:
+                  - medialive-network-sg
+                type: MEDIACONNECT
+                roleArn: arn:aws:iam::627399506400:role/MediaLiveAccessRole
+        - name: medialive-input-c
+          dependsOn:
+            - key: mediaConnectFlows
+              type: list
+              subKey: flowArn
+              source:
+                name: mediaconnect-flow-a
+                apiVersion: mediaconnect.aws.livewyer.io/v1alpha1
+                kind: XFlow
+                key: status.atProvider.id
+            - key: mediaConnectFlows
+              type: list
+              subKey: flowArn
+              source:
+                name: mediaconnect-flow-b
+                apiVersion: mediaconnect.aws.livewyer.io/v1alpha1
+                kind: XFlow
+                key: status.atProvider.id
+          spec:
+            apiVersion: medialive.aws.upbound.io/v1beta2
+            kind: Input
+            spec:
+              forProvider:
+                name: medialive-input-c
+                inputSecurityGroups:
+                  - medialive-network-sg
+                type: MEDIACONNECT
+                roleArn: arn:aws:iam::627399506400:role/MediaLiveAccessRole
+
+    - name: medialive-multiplex
+      resources:
+        - name: medialive-multiplex-a
+          dependsOn:
+            - key: availabilityZones
+              type: list
+              source:
+                name: mediaconnect-flow-a
+                apiVersion: mediaconnect.aws.livewyer.io/v1alpha1
+                kind: XFlow
+                key: status.atProvider.flowAvailabilityZone
+            - key: availabilityZones
+              type: list
+              source:
+                name: mediaconnect-flow-b
+                apiVersion: mediaconnect.aws.livewyer.io/v1alpha1
+                kind: XFlow
+                key: status.atProvider.flowAvailabilityZone
+          spec:
+            apiVersion: medialive.aws.upbound.io/v1beta2
+            kind: Multiplex
+            spec:
+              forProvider:
+                name: multiplex-a
+                multiplexSettings:
+                  maximumVideoBufferDelayMilliseconds: 1000
+                  transportStreamBitrate: 1000000
+                  transportStreamId: 1
+                  transportStreamReservedBitrate: 1
+                startMultiplex: true
+        - name: medialive-multiplex-b
+          dependsOn:
+            - key: availabilityZones
+              type: list
+              source:
+                name: mediaconnect-flow-a
+                apiVersion: mediaconnect.aws.livewyer.io/v1alpha1
+                kind: XFlow
+                key: status.atProvider.flowAvailabilityZone
+            - key: availabilityZones
+              type: list
+              source:
+                name: mediaconnect-flow-b
+                apiVersion: mediaconnect.aws.livewyer.io/v1alpha1
+                kind: XFlow
+                key: status.atProvider.flowAvailabilityZone
+          spec:
+            apiVersion: medialive.aws.upbound.io/v1beta2
+            kind: Multiplex
+            spec:
+              forProvider:
+                name: multiplex-b
+                multiplexSettings:
+                  maximumVideoBufferDelayMilliseconds: 1000
+                  transportStreamBitrate: 1000000
+                  transportStreamId: 1
+                  transportStreamReservedBitrate: 1
+                startMultiplex: true
+
+    - name: medialive-multiplex-program
+      resources:
+        - name: medialive-multiplex-program-a
+          dependsOn:
+            - key: multiplexId
+              source:
+                name: medialive-multiplex-a
+                apiVersion: medialive.aws.upbound.io/v1beta2
+                kind: Multiplex
+                key: status.atProvider.id
+          spec:
+            apiVersion: medialive.aws.livewyer.io/v1alpha1
+            kind: XMultiplexProgram
+            spec:
+              forProvider:
+                programName: program_a
+                multiplexProgramSettings:
+                  PreferredChannelPipeline: CURRENTLY_ACTIVE
+                  ProgramNumber: 1
+                  ServiceDescriptor:
+                    ProviderName: sample-provider
+                    ServiceName: service-a
+                  VideoSettings:
+                    ConstantBitrate: 100000
+        - name: medialive-multiplex-program-b
+          dependsOn:
+            - key: multiplexId
+              source:
+                name: medialive-multiplex-b
+                apiVersion: medialive.aws.upbound.io/v1beta2
+                kind: Multiplex
+                key: status.atProvider.id
+          spec:
+            apiVersion: medialive.aws.livewyer.io/v1alpha1
+            kind: XMultiplexProgram
+            spec:
+              forProvider:
+                programName: program_b
+                multiplexProgramSettings:
+                  PreferredChannelPipeline: CURRENTLY_ACTIVE
+                  ProgramNumber: 1
+                  ServiceDescriptor:
+                    ProviderName: sample-provider
+                    ServiceName: service-b
+                  VideoSettings:
+                    ConstantBitrate: 100000
+
+    - name: mediapackage-channel
+      resources:
+        - name: mediapackage-channel
+          spec:
+            apiVersion: mediapackage.aws.upbound.io/v1beta1
+            kind: Channel
+            spec:
+              forProvider:
+                channelId: mediapackage-channel
+        - name: mediapackage-channel-endpoint
+          spec:
+            apiVersion: mediapackage.aws.livewyer.io/v1alpha1
+            kind: XOriginEndpoint
+            spec:
+              forProvider:
+                channelId: mediapackage-channel
+                origination: ALLOW
+                cmafPackage:
+                  HlsManifests:
+                    - Id: hls-manifest
+
+    - name: medialive-channel
+      resources:
+        - name: medialive-channel-a
+          spec:
+            apiVersion: medialive.aws.upbound.io/v1beta2
+            kind: Channel
+            spec:
+              forProvider:
+                name: medialive-channel-a
+                channelClass: STANDARD
+                roleArn: arn:aws:iam::627399506400:role/MediaLiveAccessRole
+                inputSpecification:
+                  codec: AVC
+                  inputResolution: UHD
+                  maximumBitrate: MAX_50_MBPS
+                inputAttachments:
+                  - inputAttachmentName: medialive-input-a
+                    inputIdRef:
+                      name: medialive-input-a
+                    inputSettings:
+                      captionSelector:
+                        - name: sample-caption
+                          languageCode: EN
+                          selectorSettings:
+                            embeddedSourceSettings: {}
+                destinations:
+                  - id: mediapackage
+                    mediaPackageSettings:
+                      - channelId: mediapackage-channel
+                  - id: s3
+                    settings:
+                      - url: s3://heron-prototype/live/recording-a
+                      - url: s3://heron-prototype/live/recording-b
+                encoderSettings:
+                  outputGroups:
+                    - name: mediapackage-output
+                      outputGroupSettings:
+                        mediaPackageGroupSettings:
+                          destination:
+                            destinationRefId: mediapackage
+                      outputs:
+                        - outputName: mediapackage-output
+                          videoDescriptionName: sample-video
+                          audioDescriptionNames:
+                            - sample-audio
+                          captionDescriptionNames:
+                            - sample-caption
+                          outputSettings:
+                            mediaPackageOutputSettings: {}
+                    - name: s3-output
+                      outputGroupSettings:
+                        archiveGroupSettings:
+                          - destination:
+                              destinationRefId: s3
+                      outputs:
+                        - outputName: s3-output
+                          videoDescriptionName: sample-video
+                          audioDescriptionNames:
+                            - sample-audio
+                          captionDescriptionNames:
+                            - sample-caption
+                          outputSettings:
+                            archiveOutputSettings:
+                              containerSettings:
+                                m2tsSettings: {}
+                              extension: m2ts
+                              nameModifier: _1
+                  timecodeConfig:
+                    source: EMBEDDED
+                  videoDescriptions:
+                    - name: sample-video
+                      height: 1080
+                      width: 1920
+                      scalingBehavior: DEFAULT
+                      codecSettings:
+                        h264Settings:
+                          level: H264_LEVEL_AUTO
+                          profile: MAIN
+                          framerateControl: SPECIFIED
+                          framerateDenominator: 1
+                          framerateNumerator: 60
+                          parControl: SPECIFIED
+                          parDenominator: 9
+                          parNumerator: 16
+                  audioDescriptions:
+                    - name: sample-audio
+                      audioSelectorName: sample-audio
+                  captionDescriptions:
+                    - name: sample-caption
+                      languageCode: EN
+                      captionSelectorName: sample-caption
+                      destinationSettings:
+                        embeddedDestinationSettings: {}
+        - name: medialive-channel-b
+          dependsOn:
+            - key: destinations
+              type: list
+              subKey: multiplexSettings.multiplexId
+              subKeyPatchMethod: merge
+              source:
+                name: medialive-multiplex-a
+                apiVersion: medialive.aws.upbound.io/v1beta2
+                kind: Multiplex
+                key: status.atProvider.id
+          spec:
+            apiVersion: medialive.aws.upbound.io/v1beta2
+            kind: Channel
+            spec:
+              forProvider:
+                name: medialive-channel-b
+                channelClass: STANDARD
+                roleArn: arn:aws:iam::627399506400:role/MediaLiveAccessRole
+                inputSpecification:
+                  codec: AVC
+                  inputResolution: UHD
+                  maximumBitrate: MAX_50_MBPS
+                inputAttachments:
+                  - inputAttachmentName: medialive-input-b
+                    inputIdRef:
+                      name: medialive-input-b
+                    inputSettings:
+                      captionSelector:
+                        - name: sample-caption
+                          languageCode: EN
+                          selectorSettings:
+                            embeddedSourceSettings: {}
+                destinations:
+                  - id: multiplex-a
+                    multiplexSettings:
+                      programName: program_a
+                encoderSettings:
+                  outputGroups:
+                    - name: multiplex-a
+                      outputGroupSettings:
+                        multiplexGroupSettings: {}
+                      outputs:
+                        - outputName: multiplex-a
+                          videoDescriptionName: sample-video
+                          audioDescriptionNames:
+                            - sample-audio
+                          captionDescriptionNames:
+                            - sample-caption
+                          outputSettings:
+                            multiplexOutputSettings:
+                              destination:
+                                destinationRefId: multiplex-a
+                  timecodeConfig:
+                    source: EMBEDDED
+                  videoDescriptions:
+                    - name: sample-video
+                      height: 1080
+                      width: 1920
+                      scalingBehavior: DEFAULT
+                      codecSettings:
+                        h264Settings:
+                          level: H264_LEVEL_AUTO
+                          profile: MAIN
+                          framerateControl: SPECIFIED
+                          framerateDenominator: 1
+                          framerateNumerator: 24
+                          parControl: SPECIFIED
+                          parDenominator: 9
+                          parNumerator: 16
+                          rateControlMode: MULTIPLEX
+                  audioDescriptions:
+                    - name: sample-audio
+                      audioSelectorName: sample-audio
+                  captionDescriptions:
+                    - name: sample-caption
+                      languageCode: EN
+                      captionSelectorName: sample-caption
+                      destinationSettings:
+                        embeddedDestinationSettings: {}
+        - name: medialive-channel-c
+          dependsOn:
+            - key: destinations
+              type: list
+              subKey: multiplexSettings.multiplexId
+              subKeyPatchMethod: merge
+              source:
+                name: medialive-multiplex-b
+                apiVersion: medialive.aws.upbound.io/v1beta2
+                kind: Multiplex
+                key: status.atProvider.id
+          spec:
+            apiVersion: medialive.aws.upbound.io/v1beta2
+            kind: Channel
+            spec:
+              forProvider:
+                name: medialive-channel-c
+                channelClass: STANDARD
+                roleArn: arn:aws:iam::627399506400:role/MediaLiveAccessRole
+                inputSpecification:
+                  codec: AVC
+                  inputResolution: UHD
+                  maximumBitrate: MAX_50_MBPS
+                inputAttachments:
+                  - inputAttachmentName: medialive-input-c
+                    inputIdRef:
+                      name: medialive-input-c
+                    inputSettings:
+                      captionSelector:
+                        - name: sample-caption
+                          languageCode: EN
+                          selectorSettings:
+                            embeddedSourceSettings: {}
+                destinations:
+                  - id: multiplex-b
+                    multiplexSettings:
+                      programName: program_b
+                encoderSettings:
+                  outputGroups:
+                    - name: multiplex-b
+                      outputGroupSettings:
+                        multiplexGroupSettings: {}
+                      outputs:
+                        - outputName: multiplex-b
+                          videoDescriptionName: sample-video
+                          audioDescriptionNames:
+                            - sample-audio
+                          captionDescriptionNames:
+                            - sample-caption
+                          outputSettings:
+                            multiplexOutputSettings:
+                              destination:
+                                destinationRefId: multiplex-b
+                  timecodeConfig:
+                    source: EMBEDDED
+                  videoDescriptions:
+                    - name: sample-video
+                      height: 1080
+                      width: 1920
+                      scalingBehavior: DEFAULT
+                      codecSettings:
+                        h264Settings:
+                          level: H264_LEVEL_AUTO
+                          profile: MAIN
+                          framerateControl: SPECIFIED
+                          framerateDenominator: 1
+                          framerateNumerator: 24
+                          parControl: SPECIFIED
+                          parDenominator: 9
+                          parNumerator: 16
+                          rateControlMode: MULTIPLEX
+                  audioDescriptions:
+                    - name: sample-audio
+                      audioSelectorName: sample-audio
+                  captionDescriptions:
+                    - name: sample-caption
+                      languageCode: EN
+                      captionSelectorName: sample-caption
+                      destinationSettings:
+                        embeddedDestinationSettings: {}

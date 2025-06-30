@@ -61,6 +61,9 @@ spec:
                     {{- if $spec.sourceFailoverConfig }},
                     "SourceFailoverConfig": {{ toJson $spec.sourceFailoverConfig }}
                     {{- end }}
+                    {{- if $spec.sourceMonitoringConfig }}
+                    "SourceMonitoringConfig": {{ toJson $spec.sourceMonitoringConfig }}
+                    {{- end }}
                     {{- if $spec.mediaStreams }},
                     "MediaStreams": {{ toJson $spec.mediaStreams }}
                     {{- end }}

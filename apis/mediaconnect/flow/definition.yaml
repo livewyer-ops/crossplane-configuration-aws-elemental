@@ -169,6 +169,60 @@ spec:
                           type: string
                           description: "The range of IP addresses that should be allowed to contribute content to your source."
                           pattern: "^([0-9]{1,3}\\.){3}[0-9]{1,3}/([0-9]|[1-2][0-9]|3[0-2])$"
+                    sourceMonitoringConfig:
+                      type: object
+                      properties:
+                        AudioMonitoringSettings:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              SilentAudio:
+                                type: object
+                                properties:
+                                  State:
+                                    type: string
+                                    enum:
+                                      - "ENABLED"
+                                      - "DISABLED"
+                                  ThresholdSeconds:
+                                    type: integer
+                        ContentQualityAnalysisState:
+                          type: string
+                          enum:
+                            - "ENABLED"
+                            - "DISABLED"
+                        ThumbnailState:
+                          type: string
+                          enum:
+                            - "ENABLED"
+                            - "DISABLED"
+                          default: ENABLED
+                        VideoMonitoringSettings:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              BlackFrames:
+                                type: object
+                                properties:
+                                  State:
+                                    type: string
+                                    enum:
+                                      - "ENABLED"
+                                      - "DISABLED"
+                                  ThresholdSeconds:
+                                    type: integer
+                              FrozenFrames:
+                                type: object
+                                properties:
+                                  State:
+                                    type: string
+                                    enum:
+                                      - "ENABLED"
+                                      - "DISABLED"
+                                  ThresholdSeconds:
+                                    type: integer
                     sourceFailoverConfig:
                       type: object
                       description: "The settings for source failover."
