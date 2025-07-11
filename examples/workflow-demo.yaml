@@ -24,6 +24,7 @@ spec:
                   WhitelistCidr: 192.168.0.100/32
                   IngestPort: 3000
                   Protocol: rtp
+                  MaxBitrate: 100000
         - name: mediaconnect-flow-b
           spec:
             apiVersion: mediaconnect.aws.livewyer.io/v1alpha1
@@ -36,6 +37,7 @@ spec:
                   WhitelistCidr: 192.168.0.100/32
                   IngestPort: 4000
                   Protocol: rtp
+                  MaxBitrate: 100000
 
     - name: medialive-network
       resources:
@@ -188,10 +190,8 @@ spec:
               forProvider:
                 name: multiplex-a
                 multiplexSettings:
-                  maximumVideoBufferDelayMilliseconds: 1000
                   transportStreamBitrate: 1000000
                   transportStreamId: 1
-                  transportStreamReservedBitrate: 1
                 startMultiplex: true
         - name: medialive-multiplex-b
           dependsOn:
@@ -216,10 +216,8 @@ spec:
               forProvider:
                 name: multiplex-b
                 multiplexSettings:
-                  maximumVideoBufferDelayMilliseconds: 1000
                   transportStreamBitrate: 1000000
                   transportStreamId: 1
-                  transportStreamReservedBitrate: 1
                 startMultiplex: true
 
     - name: medialive-multiplex-program
@@ -303,8 +301,8 @@ spec:
                 roleArn: arn:aws:iam::627399506400:role/MediaLiveAccessRole
                 inputSpecification:
                   codec: AVC
-                  inputResolution: UHD
-                  maximumBitrate: MAX_50_MBPS
+                  inputResolution: SD
+                  maximumBitrate: MAX_10_MBPS
                 inputAttachments:
                   - inputAttachmentName: medialive-input-a1
                     inputIdRef:
@@ -370,8 +368,8 @@ spec:
                     source: EMBEDDED
                   videoDescriptions:
                     - name: sample-video
-                      height: 1080
-                      width: 1920
+                      height: 640
+                      width: 480
                       scalingBehavior: DEFAULT
                       codecSettings:
                         h264Settings:
@@ -379,10 +377,10 @@ spec:
                           profile: MAIN
                           framerateControl: SPECIFIED
                           framerateDenominator: 1
-                          framerateNumerator: 60
+                          framerateNumerator: 24
                           parControl: SPECIFIED
-                          parDenominator: 9
-                          parNumerator: 16
+                          parDenominator: 3
+                          parNumerator: 4
                   audioDescriptions:
                     - name: sample-audio
                       audioSelectorName: sample-audio
@@ -413,8 +411,8 @@ spec:
                 roleArn: arn:aws:iam::627399506400:role/MediaLiveAccessRole
                 inputSpecification:
                   codec: AVC
-                  inputResolution: UHD
-                  maximumBitrate: MAX_50_MBPS
+                  inputResolution: SD
+                  maximumBitrate: MAX_10_MBPS
                 inputAttachments:
                   - inputAttachmentName: medialive-input-b
                     inputIdRef:
@@ -449,8 +447,8 @@ spec:
                     source: EMBEDDED
                   videoDescriptions:
                     - name: sample-video
-                      height: 1080
-                      width: 1920
+                      height: 640
+                      width: 480
                       scalingBehavior: DEFAULT
                       codecSettings:
                         h264Settings:
@@ -460,8 +458,8 @@ spec:
                           framerateDenominator: 1
                           framerateNumerator: 24
                           parControl: SPECIFIED
-                          parDenominator: 9
-                          parNumerator: 16
+                          parDenominator: 3
+                          parNumerator: 4
                           rateControlMode: MULTIPLEX
                   audioDescriptions:
                     - name: sample-audio
@@ -493,8 +491,8 @@ spec:
                 roleArn: arn:aws:iam::627399506400:role/MediaLiveAccessRole
                 inputSpecification:
                   codec: AVC
-                  inputResolution: UHD
-                  maximumBitrate: MAX_50_MBPS
+                  inputResolution: SD
+                  maximumBitrate: MAX_10_MBPS
                 inputAttachments:
                   - inputAttachmentName: medialive-input-c
                     inputIdRef:
@@ -529,8 +527,8 @@ spec:
                     source: EMBEDDED
                   videoDescriptions:
                     - name: sample-video
-                      height: 1080
-                      width: 1920
+                      height: 640
+                      width: 480
                       scalingBehavior: DEFAULT
                       codecSettings:
                         h264Settings:
@@ -540,8 +538,8 @@ spec:
                           framerateDenominator: 1
                           framerateNumerator: 24
                           parControl: SPECIFIED
-                          parDenominator: 9
-                          parNumerator: 16
+                          parDenominator: 3
+                          parNumerator: 4
                           rateControlMode: MULTIPLEX
                   audioDescriptions:
                     - name: sample-audio
