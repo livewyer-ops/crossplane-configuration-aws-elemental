@@ -1,0 +1,157 @@
+apiVersion: elemental.aws.livewyer.io/v1alpha1
+kind: XWorkflow
+metadata:
+  name: workflow-usecase-1
+  labels:
+    elemental.aws.livewyer.io/workflow: workflow-usecase-1
+spec:
+  providerConfigRef:
+    name: aws
+  forProvider:
+    region: us-east-1
+  steps:
+    - name: medialive-network
+      resources:
+        - name: medialive-network
+          spec:
+            apiVersion: medialive.aws.livewyer.io/v1alpha1
+            kind: Network
+            spec:
+              forProvider:
+                ipPools:
+                  - Cidr: 192.168.100.0/24
+        - name: medialive-network-sg
+          spec:
+            apiVersion: medialive.aws.upbound.io/v1beta1
+            kind: InputSecurityGroup
+            spec:
+              forProvider:
+                whitelistRules:
+                  - cidr: 192.168.100.0/24
+
+    - name: medialive-input
+      resources:
+        - name: medialive-input-a
+          spec:
+            apiVersion: medialive.aws.upbound.io/v1beta2
+            kind: Input
+            spec:
+              forProvider:
+                name: medialive-input-a
+                inputSecurityGroups:
+                  - medialive-network-sg
+                type: UDP_PUSH
+                roleArn: arn:aws:iam::627399506400:role/MediaLiveAccessRole
+        - name: medialive-input-b
+          spec:
+            apiVersion: medialive.aws.upbound.io/v1beta2
+            kind: Input
+            spec:
+              forProvider:
+                name: medialive-input-b
+                inputSecurityGroups:
+                  - medialive-network-sg
+                type: UDP_PUSH
+                roleArn: arn:aws:iam::627399506400:role/MediaLiveAccessRole
+
+    - name: mediapackage-channel
+      resources:
+        - name: mediapackage-channel
+          spec:
+            apiVersion: mediapackage.aws.upbound.io/v1beta1
+            kind: Channel
+            spec:
+              forProvider:
+                channelId: mediapackage-channel
+        - name: mediapackage-channel-endpoint
+          spec:
+            apiVersion: mediapackage.aws.livewyer.io/v1alpha1
+            kind: XOriginEndpoint
+            spec:
+              forProvider:
+                channelId: mediapackage-channel
+                origination: ALLOW
+                cmafPackage:
+                  HlsManifests:
+                    - Id: hls-manifest
+
+    - name: medialive-channel
+      resources:
+        - name: medialive-channel-a
+          spec:
+            apiVersion: medialive.aws.upbound.io/v1beta2
+            kind: Channel
+            spec:
+              forProvider:
+                name: medialive-channel
+                channelClass: STANDARD
+                roleArn: arn:aws:iam::627399506400:role/MediaLiveAccessRole
+                inputSpecification:
+                  codec: AVC
+                  inputResolution: SD
+                  maximumBitrate: MAX_10_MBPS
+                inputAttachments:
+                  - inputAttachmentName: medialive-input-a
+                    inputIdRef:
+                      name: medialive-input-a
+                    inputSettings:
+                      captionSelector:
+                        - name: sample-caption
+                          languageCode: EN
+                          selectorSettings:
+                            embeddedSourceSettings: {}
+                  - inputAttachmentName: medialive-input-b
+                    inputIdRef:
+                      name: medialive-input-b
+                    inputSettings:
+                      captionSelector:
+                        - name: sample-caption
+                          languageCode: EN
+                          selectorSettings:
+                            embeddedSourceSettings: {}
+                destinations:
+                  - id: mediapackage
+                    mediaPackageSettings:
+                      - channelId: mediapackage-channel
+                encoderSettings:
+                  outputGroups:
+                    - name: mediapackage-output
+                      outputGroupSettings:
+                        mediaPackageGroupSettings:
+                          destination:
+                            destinationRefId: mediapackage
+                      outputs:
+                        - outputName: mediapackage-output
+                          videoDescriptionName: sample-video
+                          audioDescriptionNames:
+                            - sample-audio
+                          captionDescriptionNames:
+                            - sample-caption
+                          outputSettings:
+                            mediaPackageOutputSettings: {}
+                  timecodeConfig:
+                    source: EMBEDDED
+                  videoDescriptions:
+                    - name: sample-video
+                      height: 640
+                      width: 480
+                      scalingBehavior: DEFAULT
+                      codecSettings:
+                        h264Settings:
+                          level: H264_LEVEL_AUTO
+                          profile: MAIN
+                          framerateControl: SPECIFIED
+                          framerateDenominator: 1
+                          framerateNumerator: 24
+                          parControl: SPECIFIED
+                          parDenominator: 3
+                          parNumerator: 4
+                  audioDescriptions:
+                    - name: sample-audio
+                      audioSelectorName: sample-audio
+                  captionDescriptions:
+                    - name: sample-caption
+                      languageCode: EN
+                      captionSelectorName: sample-caption
+                      destinationSettings:
+                        embeddedDestinationSettings: {}
