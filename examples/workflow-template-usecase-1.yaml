@@ -1,5 +1,5 @@
 apiVersion: elemental.aws.livewyer.io/v1alpha1
-kind: XWorkflow
+kind: XWorkflowTemplate
 metadata:
   name: workflow-usecase-1
   labels:
@@ -19,7 +19,7 @@ spec:
             spec:
               forProvider:
                 ipPools:
-                  - Cidr: 192.168.100.0/24
+                  - Cidr: "{{ $params.network }}"
         - name: medialive-network-sg
           spec:
             apiVersion: medialive.aws.upbound.io/v1beta1
@@ -27,7 +27,7 @@ spec:
             spec:
               forProvider:
                 whitelistRules:
-                  - cidr: 192.168.100.0/24
+                  - cidr: "{{ $params.network }}"
 
     - name: medialive-input
       resources:
@@ -41,7 +41,7 @@ spec:
                 inputSecurityGroups:
                   - medialive-network-sg
                 type: UDP_PUSH
-                roleArn: arn:aws:iam::627399506400:role/MediaLiveAccessRole
+                roleArn: "{{ $params.iamRole }}"
         - name: medialive-input-b
           spec:
             apiVersion: medialive.aws.upbound.io/v1beta2
@@ -52,7 +52,7 @@ spec:
                 inputSecurityGroups:
                   - medialive-network-sg
                 type: UDP_PUSH
-                roleArn: arn:aws:iam::627399506400:role/MediaLiveAccessRole
+                roleArn: "{{ $params.iamRole }}"
 
     - name: mediapackage-channel
       resources:
@@ -85,7 +85,7 @@ spec:
               forProvider:
                 name: medialive-channel
                 channelClass: STANDARD
-                roleArn: arn:aws:iam::627399506400:role/MediaLiveAccessRole
+                roleArn: "{{ $params.iamRole }}"
                 inputSpecification:
                   codec: AVC
                   inputResolution: SD

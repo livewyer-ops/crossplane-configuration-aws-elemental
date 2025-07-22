@@ -1,0 +1,32 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: workflowtemplate.elemental.aws.livewyer.io
+spec:
+  compositeTypeRef:
+    apiVersion: elemental.aws.livewyer.io/v1alpha1
+    kind: XWorkflowTemplate
+  mode: Pipeline
+  pipeline:
+    - step: go-templating
+      functionRef:
+        name: function-go-templating
+      input:
+        apiVersion: gotemplating.fn.crossplane.io/v1beta1
+        kind: GoTemplate
+        source: Inline
+        inline:
+          template: |
+            apiVersion: v1
+            kind: ConfigMap
+            metadata:
+              annotations:
+                {{ setResourceNameAnnotation (printf "workflowtemplate.elemental.aws.livewyer.io/%s" $.observed.composite.resource.metadata.name) }}
+              labels:
+                elemental.aws.livewyer.io/workflowtemplate: {{ $.observed.composite.resource.metadata.name }}
+            data:
+              workflowTemplate: {{ toJson .observed.composite.resource.spec }}
+
+    - step: automatically-detect-ready-composed-resources
+      functionRef:
+        name: function-auto-ready

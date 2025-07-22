@@ -35,3 +35,4 @@ go.work.sum
 _output
 .venv
 .up
+.observed
