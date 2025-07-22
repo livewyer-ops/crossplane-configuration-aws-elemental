@@ -1,0 +1,109 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: CompositeResourceDefinition
+metadata:
+  name: xevents.elemental.aws.livewyer.io
+spec:
+  group: elemental.aws.livewyer.io
+  names:
+    kind: XEvent
+    plural: xevents
+  claimNames:
+    kind: Event
+    plural: events
+  versions:
+    - name: v1alpha1
+      served: true
+      referenceable: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              properties:
+                workflowTemplate:
+                  type: object
+                  description: "WorkflowTemplate reference and additional configuration"
+                  properties:
+                    id:
+                      type: string
+                      description: "WorkflowTemplate to use"
+                    parameters:
+                      type: object
+                      description: "Additional configuration for selected WorkflowTemplate"
+                      x-kubernetes-preserve-unknown-fields: true
+                  required:
+                    - id
+                  x-kubernetes-preserve-unknown-fields: false
+                forProvider:
+                  type: object
+                  x-kubernetes-preserve-unknown-fields: true
+                deletionPolicy:
+                  type: string
+                  enum:
+                    - Delete
+                    - Orphan
+                  default: Delete
+                  description: "DeletionPolicy specifies what will happen to the underlying external when this managed resource is deleted."
+                managementPolicies:
+                  type: array
+                  items:
+                    type: string
+                    enum:
+                      - "*"
+                      - Create
+                      - Update
+                      - Delete
+                      - LateInitialize
+                      - Observe
+                  default: ["*"]
+                  description: "ManagementPolicies specify the array of actions Crossplane is allowed to take on the managed and external resources."
+                providerConfigRef:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                  required:
+                    - name
+                  description: "ProviderConfigReference specifies how the provider that will be used to create, observe, update, and delete this managed resource should be configured."
+                publishConnectionDetailsTo:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                    configRef:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                      required:
+                        - name
+                    metadata:
+                      type: object
+                      properties:
+                        labels:
+                          type: object
+                          additionalProperties:
+                            type: string
+                        annotations:
+                          type: object
+                          additionalProperties:
+                            type: string
+                        type:
+                          type: array
+                          items:
+                            type: string
+                  required:
+                    - name
+                  description: "PublishConnectionDetailsTo specifies the connection secret config which contains a name, metadata and a reference to secret store config to which any connection details for this managed resource should be written."
+                writeConnectionSecretsToNamespace:
+                  type: string
+                  description: "WriteConnectionSecretsToNamespace specifies the namespace in which the connection secrets of this managed resource should be written."
+              x-kubernetes-preserve-unknown-fields: true
+              required:
+                - workflowTemplate
+            status:
+              type: object
+              x-kubernetes-preserve-unknown-fields: true
+          required:
+            - spec

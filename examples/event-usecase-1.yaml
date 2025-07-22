@@ -1,0 +1,16 @@
+apiVersion: elemental.aws.livewyer.io/v1alpha1
+kind: XEvent
+metadata:
+  name: workflow-usecase-1
+  labels:
+    elemental.aws.livewyer.io/workflow: workflow-usecase-1
+spec:
+  providerConfigRef:
+    name: aws
+  forProvider:
+    region: us-east-1
+  workflowTemplate:
+    id: workflow-usecase-1
+    parameters:
+      network: 192.168.0.100/32
+      iamRole: arn:aws:iam::627399506400:role/MediaLiveAccessRole

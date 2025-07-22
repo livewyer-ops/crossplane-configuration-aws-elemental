@@ -1,0 +1,91 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: events.elemental.aws.livewyer.io
+spec:
+  compositeTypeRef:
+    apiVersion: elemental.aws.livewyer.io/v1alpha1
+    kind: XEvent
+  mode: Pipeline
+  pipeline:
+    - step: go-templating
+      functionRef:
+        name: function-go-templating
+      input:
+        apiVersion: gotemplating.fn.crossplane.io/v1beta1
+        kind: GoTemplate
+        source: Inline
+        inline:
+          template: |
+            {{- define "replaceTemplateVars" -}}
+              {{- $template := index . 0 -}}
+              {{- $params := index . 1 -}}
+
+              {{- if kindIs "map" $template -}}
+                {{- $result := dict -}}
+                {{- range $key, $value := $template -}}
+                  {{- if kindIs "string" $value -}}
+                    {{- if regexMatch "^\\{\\{\\s+\\w+\\s+\\}\\}$" $value -}}
+                      {{- $varName := regexReplaceAll "^\\{\\{\\s+|\\s+\\}\\}$" $value "" -}}
+                      {{- $_ := set $result $key (index $params $varName) -}}
+                    {{- else -}}
+                      {{- $_ := set $result $key $value -}}
+                    {{- end -}}
+                  {{- else if or (kindIs "map" $value) (kindIs "slice" $value) -}}
+                    {{- $processedValue := include "replaceTemplateVars" (list $value $params) | fromYaml -}}
+                    {{- $_ := set $result $key $processedValue -}}
+                  {{- else -}}
+                    {{- $_ := set $result $key $value -}}
+                  {{- end -}}
+                {{- end -}}
+                {{- $result | toYaml -}}
+              {{- else if kindIs "slice" $template -}}
+                {{- $result := list -}}
+                {{- range $template -}}
+                  {{- if kindIs "string" . -}}
+                    {{- if regexMatch "^\\{\\{\\s+\\w+\\s+\\}\\}$" . -}}
+                      {{- $varName := regexReplaceAll "^\\{\\{\\s+|\\s+\\}\\}$" . "" -}}
+                      {{- $result = append $result (index $params $varName) -}}
+                    {{- else -}}
+                      {{- $result = append $result . -}}
+                    {{- end -}}
+                  {{- else if or (kindIs "map" .) (kindIs "slice" .) -}}
+                    {{- $processedValue := include "replaceTemplateVars" (list . $params) | fromYaml -}}
+                    {{- $result = append $result $processedValue -}}
+                  {{- else -}}
+                    {{- $result = append $result . -}}
+                  {{- end -}}
+                {{- end -}}
+                {{- $result | toYaml -}}
+              {{- else if kindIs "string" $template -}}
+                {{- if regexMatch "^\\{\\{\\s+\\w+\\s+\\}\\}$" $template -}}
+                  {{- $varName := regexReplaceAll "^\\{\\{\\s+|\\s+\\}\\}$" $template "" -}}
+                  {{- index $params $varName -}}
+                {{- else -}}
+                  {{- $template -}}
+                {{- end -}}
+              {{- else -}}
+                {{- $template -}}
+              {{- end -}}
+
+            {{- end -}}
+
+            {{ $id := .observed.composite.resource.metadata.name -}}
+            {{ $params := .observed.composite.resource.spec.workflowTemplate.parameters -}}
+            {{ $templateSource := dig "resources" (printf "workflowtemplate.elemental.aws.livewyer.io/%s" .observed.composite.resource.spec.workflowTemplate.id) "resource" "data" "workflowTemplate" (dict) $.observed }}
+
+            apiVersion: elemental.aws.livewyer.io/v1alpha1
+            kind: XWorkflow
+            metadata:
+              name: {{ $id }}
+              annotations:
+                {{ setResourceNameAnnotation (printf "workflow.elemental.aws.livewyer.io/%s" $id) }}
+              labels:
+                elemental.aws.livewyer.io/workflow: {{ $id }}
+            spec:
+              {{- $processedTemplate := include "replaceTemplateVars" (list $templateSource $params) | fromYaml -}}
+              {{- $processedTemplate | toYaml | nindent 2 }}
+
+    - step: automatically-detect-ready-composed-resources
+      functionRef:
+        name: function-auto-ready
