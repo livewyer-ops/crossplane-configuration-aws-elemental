@@ -161,7 +161,7 @@ spec:
                 inputSecurityGroups:
                   - medialive-network-sg
                 type: MEDIACONNECT
-                roleArn: arn:aws:iam::627399506400:role/MediaLiveAccessRole
+                roleArn: arn:aws:iam::123456789012:role/MediaLiveAccessRole
         - name: medialive-input-b
           dependsOn:
             - key: mediaConnectFlows
@@ -189,7 +189,7 @@ spec:
                 inputSecurityGroups:
                   - medialive-network-sg
                 type: MEDIACONNECT
-                roleArn: arn:aws:iam::627399506400:role/MediaLiveAccessRole
+                roleArn: arn:aws:iam::123456789012:role/MediaLiveAccessRole
         - name: medialive-input-c
           dependsOn:
             - key: mediaConnectFlows
@@ -217,7 +217,7 @@ spec:
                 inputSecurityGroups:
                   - medialive-network-sg
                 type: MEDIACONNECT
-                roleArn: arn:aws:iam::627399506400:role/MediaLiveAccessRole
+                roleArn: arn:aws:iam::123456789012:role/MediaLiveAccessRole
 
     - name: medialive-multiplex
       resources:
@@ -378,8 +378,8 @@ spec:
                       - channelId: mediapackage-channel
                   - id: s3
                     settings:
-                      - url: s3://heron-prototype/live/recording-a
-                      - url: s3://heron-prototype/live/recording-b
+                      - url: s3://bucket/live/recording-a
+                      - url: s3://bucket/live/recording-b
                 encoderSettings:
                   outputGroups:
                     - name: mediapackage-output

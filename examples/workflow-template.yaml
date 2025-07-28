@@ -3,7 +3,7 @@ kind: XWorkflowTemplate
 metadata:
   name: workflow-usecase-1
   labels:
-    elemental.aws.livewyer.io/workflow: workflow-usecase-1
+    elemental.aws.livewyer.io/event: workflow-usecase-1
 spec:
   steps:
     - name: medialive-network
@@ -11,7 +11,7 @@ spec:
         - name: medialive-network
           spec:
             apiVersion: medialive.aws.livewyer.io/v1alpha1
-            kind: Network
+            kind: XNetwork
             spec:
               forProvider:
                 ipPools:
@@ -34,10 +34,9 @@ spec:
             spec:
               forProvider:
                 name: medialive-input-a
-                inputSecurityGroups:
-                  - medialive-network-sg
-                type: UDP_PUSH
-                roleArn: "{{ iamRole }}"
+                inputSecurityGroupsRefs:
+                  - name: medialive-network-sg
+                type: RTP_PUSH
         - name: medialive-input-b
           spec:
             apiVersion: medialive.aws.upbound.io/v1beta2
@@ -45,10 +44,9 @@ spec:
             spec:
               forProvider:
                 name: medialive-input-b
-                inputSecurityGroups:
-                  - medialive-network-sg
-                type: UDP_PUSH
-                roleArn: "{{ iamRole }}"
+                inputSecurityGroupsRefs:
+                  - name: medialive-network-sg
+                type: RTP_PUSH
 
     - name: mediapackage-channel
       resources:
@@ -73,14 +71,14 @@ spec:
 
     - name: medialive-channel
       resources:
-        - name: medialive-channel-a
+        - name: medialive-channel
           spec:
             apiVersion: medialive.aws.upbound.io/v1beta2
             kind: Channel
             spec:
               forProvider:
                 name: medialive-channel
-                channelClass: STANDARD
+                channelClass: SINGLE_PIPELINE
                 roleArn: "{{ iamRole }}"
                 inputSpecification:
                   codec: AVC
@@ -90,64 +88,40 @@ spec:
                   - inputAttachmentName: medialive-input-a
                     inputIdRef:
                       name: medialive-input-a
-                    inputSettings:
-                      captionSelector:
-                        - name: sample-caption
-                          languageCode: EN
-                          selectorSettings:
-                            embeddedSourceSettings: {}
+                    inputSettings: {}
                   - inputAttachmentName: medialive-input-b
                     inputIdRef:
                       name: medialive-input-b
-                    inputSettings:
-                      captionSelector:
-                        - name: sample-caption
-                          languageCode: EN
-                          selectorSettings:
-                            embeddedSourceSettings: {}
+                    inputSettings: {}
                 destinations:
                   - id: mediapackage
                     mediaPackageSettings:
                       - channelId: mediapackage-channel
                 encoderSettings:
+                  audioDescriptions:
+                    - name: sample-audio
+                      audioSelectorName: sample-audio
+                  videoDescriptions:
+                    - name: sample-video
+                      height: 480
+                      width: 640
+                      codecSettings:
+                        h265Settings:
+                          level: H265_LEVEL_AUTO
+                          framerateDenominator: 1
+                          framerateNumerator: 24
                   outputGroups:
-                    - name: mediapackage-output
+                    - name: mediapackage
                       outputGroupSettings:
                         mediaPackageGroupSettings:
                           destination:
                             destinationRefId: mediapackage
                       outputs:
-                        - outputName: mediapackage-output
+                        - outputName: mediapackage
                           videoDescriptionName: sample-video
                           audioDescriptionNames:
                             - sample-audio
-                          captionDescriptionNames:
-                            - sample-caption
                           outputSettings:
                             mediaPackageOutputSettings: {}
                   timecodeConfig:
                     source: EMBEDDED
-                  videoDescriptions:
-                    - name: sample-video
-                      height: 640
-                      width: 480
-                      scalingBehavior: DEFAULT
-                      codecSettings:
-                        h264Settings:
-                          level: H264_LEVEL_AUTO
-                          profile: MAIN
-                          framerateControl: SPECIFIED
-                          framerateDenominator: 1
-                          framerateNumerator: 24
-                          parControl: SPECIFIED
-                          parDenominator: 3
-                          parNumerator: 4
-                  audioDescriptions:
-                    - name: sample-audio
-                      audioSelectorName: sample-audio
-                  captionDescriptions:
-                    - name: sample-caption
-                      languageCode: EN
-                      captionSelectorName: sample-caption
-                      destinationSettings:
-                        embeddedDestinationSettings: {}

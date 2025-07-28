@@ -6,6 +6,7 @@ rules:
   - apiGroups:
       - aws.upbound.io
       - aws.livewyer.io
+      - nop.crossplane.io
     resources:
       - "*"
     verbs:

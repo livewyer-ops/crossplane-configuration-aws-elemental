@@ -70,9 +70,30 @@ spec:
 
             {{- end -}}
 
-            {{ $id := .observed.composite.resource.metadata.name -}}
-            {{ $params := .observed.composite.resource.spec.workflowTemplate.parameters -}}
-            {{ $templateSource := dig "resources" (printf "workflowtemplate.elemental.aws.livewyer.io/%s" .observed.composite.resource.spec.workflowTemplate.id) "resource" "spec" (dict) $.observed }}
+            {{- $id := $.observed.composite.resource.metadata.name -}}
+            {{- $templateId := (printf "event.elemental.aws.livewyer.io/%s" $.observed.composite.resource.spec.workflowTemplate.id) -}}
+            {{- $params := $.observed.composite.resource.spec.workflowTemplate.parameters -}}
+
+            ---
+
+            apiVersion: kubernetes.crossplane.io/v1alpha2
+            kind: Object
+            metadata:
+              name: {{ $.observed.composite.resource.spec.workflowTemplate.id }}
+              annotations:
+                {{ setResourceNameAnnotation (printf "event.elemental.aws.livewyer.io/%s" $id) }}
+            spec:
+              forProvider:
+                manifest:
+                  apiVersion: nop.crossplane.io/v1alpha1
+                  kind: NopResource
+                  metadata:
+                    name: {{ $.observed.composite.resource.spec.workflowTemplate.id }}
+              providerConfigRef:
+                name: kubernetes-provider
+              managementPolicies: ["Observe"]
+
+            ---
 
             apiVersion: elemental.aws.livewyer.io/v1alpha1
             kind: XWorkflow
@@ -83,9 +104,10 @@ spec:
               labels:
                 elemental.aws.livewyer.io/workflow: {{ $id }}
             spec:
-              {{ $processedTemplate := include "replaceTemplateVars" (list $templateSource $params) | fromYaml -}}
-              forProvider: {{ default (default (dict) $templateSource.forProvider) $.observed.composite.resource.spec.forProvider | toJson }}
-              providerConfigRef: {{ default (default (dict "name" "default") $templateSource.providerConfigRef) $.observed.composite.resource.spec.providerConfigRef | toJson }}
+              {{- $templateSource := get (getComposedResource . $templateId).status.atProvider.manifest.spec.forProvider "fields" -}}
+              {{ $processedTemplate := include "replaceTemplateVars" (list $templateSource $params) | fromYaml }}
+              forProvider: {{ default (default (dict) $processedTemplate.forProvider) $.observed.composite.resource.spec.forProvider | toJson }}
+              providerConfigRef: {{ default (default (dict "name" "default") $processedTemplate.providerConfigRef) $.observed.composite.resource.spec.providerConfigRef | toJson }}
               steps: {{ $processedTemplate.steps | toJson }}
 
     - step: automatically-detect-ready-composed-resources

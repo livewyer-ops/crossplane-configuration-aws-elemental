@@ -13,4 +13,4 @@ spec:
     id: workflow-usecase-1
     parameters:
       network: 192.168.0.100/32
-      iamRole: arn:aws:iam::627399506400:role/MediaLiveAccessRole
+      iamRole: arn:aws:iam::123456789012:role/MediaLiveAccessRole

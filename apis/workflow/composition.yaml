@@ -79,7 +79,7 @@ spec:
             {{- end -}}
             {{- end -}}
 
-            {{- range $step := .observed.composite.resource.spec.steps }}
+            {{- range $step := $.observed.composite.resource.spec.steps }}
             {{- range $resource := $step.resources }}
             {{- $spec := (dig "spec" (dict) $resource.spec) }}
             {{- $parameters := (dig "spec" "forProvider" dict $resource.spec) }}
