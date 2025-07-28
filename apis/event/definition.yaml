@@ -34,7 +34,6 @@ spec:
                       x-kubernetes-preserve-unknown-fields: true
                   required:
                     - id
-                  x-kubernetes-preserve-unknown-fields: false
                 forProvider:
                   type: object
                   x-kubernetes-preserve-unknown-fields: true

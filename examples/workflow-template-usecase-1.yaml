@@ -5,10 +5,6 @@ metadata:
   labels:
     elemental.aws.livewyer.io/workflow: workflow-usecase-1
 spec:
-  providerConfigRef:
-    name: aws
-  forProvider:
-    region: us-east-1
   steps:
     - name: medialive-network
       resources:
@@ -19,7 +15,7 @@ spec:
             spec:
               forProvider:
                 ipPools:
-                  - Cidr: "{{ $params.network }}"
+                  - Cidr: "{{ network }}"
         - name: medialive-network-sg
           spec:
             apiVersion: medialive.aws.upbound.io/v1beta1
@@ -27,7 +23,7 @@ spec:
             spec:
               forProvider:
                 whitelistRules:
-                  - cidr: "{{ $params.network }}"
+                  - cidr: "{{ network }}"
 
     - name: medialive-input
       resources:
@@ -41,7 +37,7 @@ spec:
                 inputSecurityGroups:
                   - medialive-network-sg
                 type: UDP_PUSH
-                roleArn: "{{ $params.iamRole }}"
+                roleArn: "{{ iamRole }}"
         - name: medialive-input-b
           spec:
             apiVersion: medialive.aws.upbound.io/v1beta2
@@ -52,7 +48,7 @@ spec:
                 inputSecurityGroups:
                   - medialive-network-sg
                 type: UDP_PUSH
-                roleArn: "{{ $params.iamRole }}"
+                roleArn: "{{ iamRole }}"
 
     - name: mediapackage-channel
       resources:
@@ -85,7 +81,7 @@ spec:
               forProvider:
                 name: medialive-channel
                 channelClass: STANDARD
-                roleArn: "{{ $params.iamRole }}"
+                roleArn: "{{ iamRole }}"
                 inputSpecification:
                   codec: AVC
                   inputResolution: SD

@@ -17,15 +17,13 @@ spec:
         source: Inline
         inline:
           template: |
-            apiVersion: v1
-            kind: ConfigMap
+            apiVersion: {{ .observed.composite.resource.apiVersion }}
+            kind: {{ .observed.composite.resource.kind }}
             metadata:
               annotations:
-                {{ setResourceNameAnnotation (printf "workflowtemplate.elemental.aws.livewyer.io/%s" $.observed.composite.resource.metadata.name) }}
+                {{ setResourceNameAnnotation (printf "workflowtemplate.elemental.aws.livewyer.io/%s" .observed.composite.resource.metadata.name) }}
               labels:
-                elemental.aws.livewyer.io/workflowtemplate: {{ $.observed.composite.resource.metadata.name }}
-            data:
-              workflowTemplate: {{ toJson .observed.composite.resource.spec }}
+                elemental.aws.livewyer.io/workflowtemplate: {{ .observed.composite.resource.metadata.name }}
 
     - step: automatically-detect-ready-composed-resources
       functionRef:

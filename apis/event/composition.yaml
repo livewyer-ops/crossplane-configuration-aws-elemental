@@ -72,7 +72,7 @@ spec:
 
             {{ $id := .observed.composite.resource.metadata.name -}}
             {{ $params := .observed.composite.resource.spec.workflowTemplate.parameters -}}
-            {{ $templateSource := dig "resources" (printf "workflowtemplate.elemental.aws.livewyer.io/%s" .observed.composite.resource.spec.workflowTemplate.id) "resource" "data" "workflowTemplate" (dict) $.observed }}
+            {{ $templateSource := dig "resources" (printf "workflowtemplate.elemental.aws.livewyer.io/%s" .observed.composite.resource.spec.workflowTemplate.id) "resource" "spec" (dict) $.observed }}
 
             apiVersion: elemental.aws.livewyer.io/v1alpha1
             kind: XWorkflow
@@ -83,8 +83,10 @@ spec:
               labels:
                 elemental.aws.livewyer.io/workflow: {{ $id }}
             spec:
-              {{- $processedTemplate := include "replaceTemplateVars" (list $templateSource $params) | fromYaml -}}
-              {{- $processedTemplate | toYaml | nindent 2 }}
+              {{ $processedTemplate := include "replaceTemplateVars" (list $templateSource $params) | fromYaml -}}
+              forProvider: {{ default (default (dict) $templateSource.forProvider) $.observed.composite.resource.spec.forProvider | toJson }}
+              providerConfigRef: {{ default (default (dict "name" "default") $templateSource.providerConfigRef) $.observed.composite.resource.spec.providerConfigRef | toJson }}
+              steps: {{ $processedTemplate.steps | toJson }}
 
     - step: automatically-detect-ready-composed-resources
       functionRef:
