@@ -88,11 +88,9 @@ spec:
                   - inputAttachmentName: medialive-input-a
                     inputIdRef:
                       name: medialive-input-a
-                    inputSettings: {}
                   - inputAttachmentName: medialive-input-b
                     inputIdRef:
                       name: medialive-input-b
-                    inputSettings: {}
                 destinations:
                   - id: mediapackage
                     mediaPackageSettings:
@@ -100,7 +98,7 @@ spec:
                 encoderSettings:
                   audioDescriptions:
                     - name: sample-audio
-                      audioSelectorName: sample-audio
+                      audioSelectorName: default
                   videoDescriptions:
                     - name: sample-video
                       height: 480
@@ -111,16 +109,15 @@ spec:
                           framerateDenominator: 1
                           framerateNumerator: 24
                   outputGroups:
-                    - name: mediapackage
-                      outputGroupSettings:
+                    - outputGroupSettings:
                         mediaPackageGroupSettings:
                           destination:
                             destinationRefId: mediapackage
                       outputs:
                         - outputName: mediapackage
-                          videoDescriptionName: sample-video
                           audioDescriptionNames:
                             - sample-audio
+                          videoDescriptionName: sample-video
                           outputSettings:
                             mediaPackageOutputSettings: {}
                   timecodeConfig:
