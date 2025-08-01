@@ -1,10 +1,20 @@
-# Elemental Workflow
+# Workflow
 
-The Elemental Workflow resource allows you to create complex, multi-step workflows that orchestrate the creation and configuration of multiple AWS Elemental resources with dependencies and dynamic value injection.
+The Workflow resource allows you to create complex, multi-step workflows that orchestrate the creation and configuration of multiple AWS Elemental resources with dependencies and dynamic value injection through direct resource specification.
 
 ## Overview
 
-The Elemental Workflow provides a powerful way to define and execute complex workflows involving multiple AWS Elemental resources. It supports dependency management, dynamic value injection between resources, and step-by-step execution of resource creation. This enables you to build sophisticated media processing pipelines with proper ordering and data flow between components.
+The Workflow resource provides a direct approach to defining and executing complex workflows involving multiple AWS Elemental resources. Unlike event-driven workflows (Events) or template-based workflows (WorkflowTemplates), Workflows contain complete resource specifications directly within the workflow definition. This approach supports dependency management, dynamic value injection between resources, and step-by-step execution of resource creation, enabling you to build sophisticated media processing pipelines with proper ordering and data flow between components.
+
+## Workflow Types Comparison
+
+This configuration provides three types of workflow orchestration:
+
+- **Workflow** (this resource) - Direct workflow definition with complete resource specifications
+- **[Event](event.md)** - Event-driven workflow execution using WorkflowTemplates with parameters
+- **[WorkflowTemplate](workflowtemplate.md)** - Reusable workflow templates with Go templating and parameterization
+
+Choose Workflows when you need direct control over resource specifications and don't require template reusability.
 
 ## API Reference
 
@@ -16,55 +26,55 @@ The Elemental Workflow provides a powerful way to define and execute complex wor
 
 ### Specification
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `steps` | array | Yes | Array of workflow steps to execute |
-| `forProvider` | object | No | Global provider configuration and shared parameters |
-| `deletionPolicy` | string | No | Deletion policy (`Delete`, `Orphan`) |
-| `managementPolicies` | array | No | Management policies for the workflow |
-| `providerConfigRef` | object | No | Provider configuration reference |
-| `publishConnectionDetailsTo` | object | No | Connection details publishing configuration |
-| `writeConnectionSecretsToNamespace` | string | No | Namespace for writing connection secrets |
+| Field                               | Type   | Required | Description                                         |
+| ----------------------------------- | ------ | -------- | --------------------------------------------------- |
+| `steps`                             | array  | Yes      | Array of workflow steps to execute                  |
+| `forProvider`                       | object | No       | Global provider configuration and shared parameters |
+| `deletionPolicy`                    | string | No       | Deletion policy (`Delete`, `Orphan`)                |
+| `managementPolicies`                | array  | No       | Management policies for the workflow                |
+| `providerConfigRef`                 | object | No       | Provider configuration reference                    |
+| `publishConnectionDetailsTo`        | object | No       | Connection details publishing configuration         |
+| `writeConnectionSecretsToNamespace` | string | No       | Namespace for writing connection secrets            |
 
 ### Steps Configuration
 
 Each step contains:
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `name` | string | No | Name of the workflow step |
-| `resources` | array | Yes | Array of resources to create in this step |
+| Field       | Type   | Required | Description                               |
+| ----------- | ------ | -------- | ----------------------------------------- |
+| `name`      | string | No       | Name of the workflow step                 |
+| `resources` | array  | Yes      | Array of resources to create in this step |
 
 ### Resources Configuration
 
 Each resource contains:
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `name` | string | Yes | Name of the resource |
-| `spec` | object | Yes | Resource specification (varies by resource type) |
-| `dependsOn` | array | No | Array of dependencies on other resources |
+| Field       | Type   | Required | Description                                      |
+| ----------- | ------ | -------- | ------------------------------------------------ |
+| `name`      | string | Yes      | Name of the resource                             |
+| `spec`      | object | Yes      | Resource specification (varies by resource type) |
+| `dependsOn` | array  | No       | Array of dependencies on other resources         |
 
 ### Dependencies Configuration
 
 Each dependency contains:
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `key` | string | Yes | Target path where the dependency value should be injected |
-| `type` | string | Yes | Data structure type for value injection |
-| `source` | object | Yes | Source resource and path for the dependency value |
-| `subKey` | string | No | Sub-key for list/object operations |
-| `subKeyPatchMethod` | string | No | Method for sub-key patching (`merge`) |
+| Field               | Type   | Required | Description                                               |
+| ------------------- | ------ | -------- | --------------------------------------------------------- |
+| `key`               | string | Yes      | Target path where the dependency value should be injected |
+| `type`              | string | Yes      | Data structure type for value injection                   |
+| `source`            | object | Yes      | Source resource and path for the dependency value         |
+| `subKey`            | string | No       | Sub-key for list/object operations                        |
+| `subKeyPatchMethod` | string | No       | Method for sub-key patching (`merge`)                     |
 
 #### Source Configuration
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `name` | string | Yes | Name of the source resource |
-| `apiVersion` | string | Yes | API version of the source resource |
-| `kind` | string | Yes | Kind of the source resource |
-| `key` | string | Yes | Path to the value in the source resource |
+| Field        | Type   | Required | Description                              |
+| ------------ | ------ | -------- | ---------------------------------------- |
+| `name`       | string | Yes      | Name of the source resource              |
+| `apiVersion` | string | Yes      | API version of the source resource       |
+| `kind`       | string | Yes      | Kind of the source resource              |
+| `key`        | string | Yes      | Path to the value in the source resource |
 
 ## Examples
 
@@ -419,6 +429,7 @@ The workflow supports various dependency types for value injection:
 ### Dependency Resolution
 
 Dependencies are resolved using dot notation paths:
+
 - `status.atProvider.properties.FlowArn` - Navigate to nested properties
 - `metadata.name` - Access resource metadata
 - `spec.forProvider.region` - Access specification values
@@ -426,41 +437,71 @@ Dependencies are resolved using dot notation paths:
 ### Sub-Key Operations
 
 For complex dependency scenarios:
+
 - **subKey**: Specify sub-keys for list/object operations
 - **subKeyPatchMethod**: Control how sub-keys are merged (`merge` for object merging)
 
 ## Use Cases
 
-### Media Processing Pipelines
-Create end-to-end media processing workflows with proper resource ordering and data flow.
+### Direct Resource Orchestration
 
-### Multi-Step Deployments
-Orchestrate complex deployments requiring specific resource creation sequences.
+Create workflows where you need complete control over individual resource specifications without templating.
 
-### Environment Provisioning
-Provision complete environments with all necessary resources and configurations.
+### One-Off Deployments
 
-### Testing and Development
-Create repeatable workflows for testing and development environments.
+Orchestrate specific deployments that don't require reusability across multiple environments.
 
-### Disaster Recovery
-Implement disaster recovery workflows with proper resource dependencies.
+### Complex Dependency Chains
+
+Implement workflows with intricate resource dependencies that benefit from explicit specification.
+
+### Legacy Workflow Migration
+
+Migrate existing infrastructure-as-code workflows to Crossplane without template abstraction.
+
+### Development and Prototyping
+
+Develop and prototype new workflow patterns before converting to reusable templates.
+
+### Environment-Specific Workflows
+
+Create workflows tailored to specific environments where template reusability isn't needed.
 
 ## Best Practices
 
+### When to Use Workflows vs Events/Templates
+
+**Use Workflows when:**
+
+- You need direct control over resource specifications
+- The workflow is environment-specific and won't be reused
+- You're prototyping or developing new patterns
+- You have complex, one-off dependency requirements
+
+**Use Events + WorkflowTemplates when:**
+
+- You need reusable workflow patterns
+- You want parameterized, template-based execution
+- You're implementing event-driven architectures
+- You need consistent workflows across environments
+
 ### Workflow Design
+
 - **Logical Steps**: Organize resources into logical steps
 - **Clear Dependencies**: Explicitly define resource dependencies
 - **Error Handling**: Consider failure scenarios and recovery
 - **Documentation**: Document workflow purpose and dependencies
+- **Consider Templates**: Evaluate if this workflow could benefit from being converted to a WorkflowTemplate
 
 ### Resource Naming
+
 - **Consistent Naming**: Use consistent naming conventions
 - **Descriptive Names**: Use descriptive resource names
 - **Environment Prefixes**: Include environment indicators
 - **Version Control**: Track workflow changes
 
 ### Dependency Management
+
 - **Explicit Dependencies**: Always specify required dependencies
 - **Path Validation**: Validate dependency paths
 - **Circular Dependencies**: Avoid circular dependency chains
@@ -485,7 +526,14 @@ Implement disaster recovery workflows with proper resource dependencies.
    - Check data type compatibility
    - Review sub-key operations
 
-## AWS Documentation
+## Related Resources
+
+### Other Workflow Types
+
+- **[Event](event.md)** - Event-driven workflow execution with template-based configuration
+- **[WorkflowTemplate](workflowtemplate.md)** - Reusable workflow templates with Go templating and parameterization
+
+### AWS Documentation
 
 For more information about the underlying AWS resources used in workflows, refer to:
 
@@ -497,11 +545,14 @@ For more information about the underlying AWS resources used in workflows, refer
 
 ## Notes
 
+- **Direct Definition**: Contains complete resource specifications without templating abstraction
 - **Resource Ordering**: Resources are created in step order with proper dependency resolution
 - **Global Configuration**: Use `forProvider` for shared configuration across resources
 - **Flexible Dependencies**: Support complex dependency patterns with dynamic value injection
-- **Template Processing**: Uses Go templating for advanced resource configuration
+- **No Templating**: Unlike WorkflowTemplates, uses direct resource specifications
+- **Single-Use Focus**: Best suited for specific, non-reusable workflow patterns
 - **Namespace Scoped**: Workflows are namespace-scoped for multi-tenant environments
 - **Provider Integration**: Seamlessly integrates with Crossplane provider ecosystem
 - **Monitoring**: Monitor workflow execution through Crossplane resource status
+- **Template Migration**: Consider migrating to WorkflowTemplates for reusable patterns
 - **Rollback**: Consider rollback strategies for failed workflow executions

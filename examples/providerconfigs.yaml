@@ -1,0 +1,26 @@
+#
+# NOTE: create secret `provider-aws` with AWS credentials
+# ```
+# kubectl -n crossplane-system create secret generic provider-aws --from-file=credentials=private/aws
+# ```
+
+apiVersion: aws.upbound.io/v1beta1
+kind: ProviderConfig
+metadata:
+  name: aws
+spec:
+  credentials:
+    source: Secret
+    secretRef:
+      key: credentials
+      name: provider-aws
+      namespace: crossplane-system
+
+---
+apiVersion: kubernetes.crossplane.io/v1alpha1
+kind: ProviderConfig
+metadata:
+  name: kubernetes-provider
+spec:
+  credentials:
+    source: InjectedIdentity
