@@ -79,7 +79,7 @@ spec:
                 inputSecurityGroups:
                   - medialive-network-sg
                 type: MEDIACONNECT
-                roleArn: arn:aws:iam::627399506400:role/MediaLiveAccessRole
+                roleArn: arn:aws:iam::123456789012:role/MediaLiveAccessRole
         - name: medialive-input-a2
           dependsOn:
             - key: mediaConnectFlows
@@ -107,7 +107,7 @@ spec:
                 inputSecurityGroups:
                   - medialive-network-sg
                 type: MEDIACONNECT
-                roleArn: arn:aws:iam::627399506400:role/MediaLiveAccessRole
+                roleArn: arn:aws:iam::123456789012:role/MediaLiveAccessRole
         - name: medialive-input-b
           dependsOn:
             - key: mediaConnectFlows
@@ -135,7 +135,7 @@ spec:
                 inputSecurityGroups:
                   - medialive-network-sg
                 type: MEDIACONNECT
-                roleArn: arn:aws:iam::627399506400:role/MediaLiveAccessRole
+                roleArn: arn:aws:iam::123456789012:role/MediaLiveAccessRole
         - name: medialive-input-c
           dependsOn:
             - key: mediaConnectFlows
@@ -163,7 +163,7 @@ spec:
                 inputSecurityGroups:
                   - medialive-network-sg
                 type: MEDIACONNECT
-                roleArn: arn:aws:iam::627399506400:role/MediaLiveAccessRole
+                roleArn: arn:aws:iam::123456789012:role/MediaLiveAccessRole
 
     - name: medialive-multiplex
       resources:
@@ -298,7 +298,7 @@ spec:
               forProvider:
                 name: medialive-channel-a
                 channelClass: STANDARD
-                roleArn: arn:aws:iam::627399506400:role/MediaLiveAccessRole
+                roleArn: arn:aws:iam::123456789012:role/MediaLiveAccessRole
                 inputSpecification:
                   codec: AVC
                   inputResolution: SD
@@ -307,29 +307,17 @@ spec:
                   - inputAttachmentName: medialive-input-a1
                     inputIdRef:
                       name: medialive-input-a1
-                    inputSettings:
-                      captionSelector:
-                        - name: sample-caption
-                          languageCode: EN
-                          selectorSettings:
-                            embeddedSourceSettings: {}
                   - inputAttachmentName: medialive-input-a2
                     inputIdRef:
                       name: medialive-input-a2
-                    inputSettings:
-                      captionSelector:
-                        - name: sample-caption
-                          languageCode: EN
-                          selectorSettings:
-                            embeddedSourceSettings: {}
                 destinations:
                   - id: mediapackage
                     mediaPackageSettings:
                       - channelId: mediapackage-channel
                   - id: s3
                     settings:
-                      - url: s3://heron-prototype/live/recording-a
-                      - url: s3://heron-prototype/live/recording-b
+                      - url: s3://output-bucket/live/recording-a
+                      - url: s3://output-bucket/live/recording-b
                 encoderSettings:
                   outputGroups:
                     - name: mediapackage-output
@@ -342,8 +330,6 @@ spec:
                           videoDescriptionName: sample-video
                           audioDescriptionNames:
                             - sample-audio
-                          captionDescriptionNames:
-                            - sample-caption
                           outputSettings:
                             mediaPackageOutputSettings: {}
                     - name: s3-output
@@ -356,8 +342,6 @@ spec:
                           videoDescriptionName: sample-video
                           audioDescriptionNames:
                             - sample-audio
-                          captionDescriptionNames:
-                            - sample-caption
                           outputSettings:
                             archiveOutputSettings:
                               containerSettings:
@@ -370,26 +354,14 @@ spec:
                     - name: sample-video
                       height: 640
                       width: 480
-                      scalingBehavior: DEFAULT
                       codecSettings:
-                        h264Settings:
-                          level: H264_LEVEL_AUTO
-                          profile: MAIN
-                          framerateControl: SPECIFIED
+                        h265Settings:
+                          level: H265_LEVEL_AUTO
                           framerateDenominator: 1
                           framerateNumerator: 24
-                          parControl: SPECIFIED
-                          parDenominator: 3
-                          parNumerator: 4
                   audioDescriptions:
                     - name: sample-audio
                       audioSelectorName: sample-audio
-                  captionDescriptions:
-                    - name: sample-caption
-                      languageCode: EN
-                      captionSelectorName: sample-caption
-                      destinationSettings:
-                        embeddedDestinationSettings: {}
         - name: medialive-channel-b
           dependsOn:
             - key: destinations
@@ -408,7 +380,7 @@ spec:
               forProvider:
                 name: medialive-channel-b
                 channelClass: STANDARD
-                roleArn: arn:aws:iam::627399506400:role/MediaLiveAccessRole
+                roleArn: arn:aws:iam::123456789012:role/MediaLiveAccessRole
                 inputSpecification:
                   codec: AVC
                   inputResolution: SD
@@ -417,12 +389,6 @@ spec:
                   - inputAttachmentName: medialive-input-b
                     inputIdRef:
                       name: medialive-input-b
-                    inputSettings:
-                      captionSelector:
-                        - name: sample-caption
-                          languageCode: EN
-                          selectorSettings:
-                            embeddedSourceSettings: {}
                 destinations:
                   - id: multiplex-a
                     multiplexSettings:
@@ -437,8 +403,6 @@ spec:
                           videoDescriptionName: sample-video
                           audioDescriptionNames:
                             - sample-audio
-                          captionDescriptionNames:
-                            - sample-caption
                           outputSettings:
                             multiplexOutputSettings:
                               destination:
@@ -449,27 +413,14 @@ spec:
                     - name: sample-video
                       height: 640
                       width: 480
-                      scalingBehavior: DEFAULT
                       codecSettings:
-                        h264Settings:
-                          level: H264_LEVEL_AUTO
-                          profile: MAIN
-                          framerateControl: SPECIFIED
+                        h265Settings:
+                          level: H265_LEVEL_AUTO
                           framerateDenominator: 1
                           framerateNumerator: 24
-                          parControl: SPECIFIED
-                          parDenominator: 3
-                          parNumerator: 4
-                          rateControlMode: MULTIPLEX
                   audioDescriptions:
                     - name: sample-audio
                       audioSelectorName: sample-audio
-                  captionDescriptions:
-                    - name: sample-caption
-                      languageCode: EN
-                      captionSelectorName: sample-caption
-                      destinationSettings:
-                        embeddedDestinationSettings: {}
         - name: medialive-channel-c
           dependsOn:
             - key: destinations
@@ -488,7 +439,7 @@ spec:
               forProvider:
                 name: medialive-channel-c
                 channelClass: STANDARD
-                roleArn: arn:aws:iam::627399506400:role/MediaLiveAccessRole
+                roleArn: arn:aws:iam::123456789012:role/MediaLiveAccessRole
                 inputSpecification:
                   codec: AVC
                   inputResolution: SD
@@ -497,12 +448,6 @@ spec:
                   - inputAttachmentName: medialive-input-c
                     inputIdRef:
                       name: medialive-input-c
-                    inputSettings:
-                      captionSelector:
-                        - name: sample-caption
-                          languageCode: EN
-                          selectorSettings:
-                            embeddedSourceSettings: {}
                 destinations:
                   - id: multiplex-b
                     multiplexSettings:
@@ -517,8 +462,6 @@ spec:
                           videoDescriptionName: sample-video
                           audioDescriptionNames:
                             - sample-audio
-                          captionDescriptionNames:
-                            - sample-caption
                           outputSettings:
                             multiplexOutputSettings:
                               destination:
@@ -529,24 +472,11 @@ spec:
                     - name: sample-video
                       height: 640
                       width: 480
-                      scalingBehavior: DEFAULT
                       codecSettings:
-                        h264Settings:
-                          level: H264_LEVEL_AUTO
-                          profile: MAIN
-                          framerateControl: SPECIFIED
+                        h265Settings:
+                          level: H265_LEVEL_AUTO
                           framerateDenominator: 1
                           framerateNumerator: 24
-                          parControl: SPECIFIED
-                          parDenominator: 3
-                          parNumerator: 4
-                          rateControlMode: MULTIPLEX
                   audioDescriptions:
                     - name: sample-audio
                       audioSelectorName: sample-audio
-                  captionDescriptions:
-                    - name: sample-caption
-                      languageCode: EN
-                      captionSelectorName: sample-caption
-                      destinationSettings:
-                        embeddedDestinationSettings: {}

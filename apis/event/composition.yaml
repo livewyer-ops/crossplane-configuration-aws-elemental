@@ -28,6 +28,15 @@ spec:
                     {{- if regexMatch "^\\{\\{\\s+\\w+\\s+\\}\\}$" $value -}}
                       {{- $varName := regexReplaceAll "^\\{\\{\\s+|\\s+\\}\\}$" $value "" -}}
                       {{- $_ := set $result $key (index $params $varName) -}}
+                    {{- else if regexMatch "\\{\\{\\s+\\w+\\s+\\}\\}" $value -}}
+                      {{- $processedValue := $value -}}
+                      {{- range $varName, $varValue := $params -}}
+                        {{- $quotedPattern := printf "\"\\{\\{\\s+%s\\s+\\}\\}\"" $varName -}}
+                        {{- $unquotedPattern := printf "\\{\\{\\s+%s\\s+\\}\\}" $varName -}}
+                        {{- $processedValue = regexReplaceAll $quotedPattern $processedValue (toString $varValue) -}}
+                        {{- $processedValue = regexReplaceAll $unquotedPattern $processedValue (toString $varValue) -}}
+                      {{- end -}}
+                      {{- $_ := set $result $key $processedValue -}}
                     {{- else -}}
                       {{- $_ := set $result $key $value -}}
                     {{- end -}}
@@ -46,6 +55,15 @@ spec:
                     {{- if regexMatch "^\\{\\{\\s+\\w+\\s+\\}\\}$" . -}}
                       {{- $varName := regexReplaceAll "^\\{\\{\\s+|\\s+\\}\\}$" . "" -}}
                       {{- $result = append $result (index $params $varName) -}}
+                    {{- else if regexMatch "\\{\\{\\s+\\w+\\s+\\}\\}" . -}}
+                      {{- $processedValue := . -}}
+                      {{- range $varName, $varValue := $params -}}
+                        {{- $quotedPattern := printf "\"\\{\\{\\s+%s\\s+\\}\\}\"" $varName -}}
+                        {{- $unquotedPattern := printf "\\{\\{\\s+%s\\s+\\}\\}" $varName -}}
+                        {{- $processedValue = regexReplaceAll $quotedPattern $processedValue (toString $varValue) -}}
+                        {{- $processedValue = regexReplaceAll $unquotedPattern $processedValue (toString $varValue) -}}
+                      {{- end -}}
+                      {{- $result = append $result $processedValue -}}
                     {{- else -}}
                       {{- $result = append $result . -}}
                     {{- end -}}
@@ -61,6 +79,15 @@ spec:
                 {{- if regexMatch "^\\{\\{\\s+\\w+\\s+\\}\\}$" $template -}}
                   {{- $varName := regexReplaceAll "^\\{\\{\\s+|\\s+\\}\\}$" $template "" -}}
                   {{- index $params $varName -}}
+                {{- else if regexMatch "\\{\\{\\s+\\w+\\s+\\}\\}" $template -}}
+                  {{- $processedValue := $template -}}
+                  {{- range $varName, $varValue := $params -}}
+                    {{- $quotedPattern := printf "\"\\{\\{\\s+%s\\s+\\}\\}\"" $varName -}}
+                    {{- $unquotedPattern := printf "\\{\\{\\s+%s\\s+\\}\\}" $varName -}}
+                    {{- $processedValue = regexReplaceAll $quotedPattern $processedValue (toString $varValue) -}}
+                    {{- $processedValue = regexReplaceAll $unquotedPattern $processedValue (toString $varValue) -}}
+                  {{- end -}}
+                  {{- $processedValue -}}
                 {{- else -}}
                   {{- $template -}}
                 {{- end -}}
