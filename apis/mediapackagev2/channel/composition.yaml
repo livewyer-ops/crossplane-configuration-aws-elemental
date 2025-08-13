@@ -5,7 +5,7 @@ metadata:
 spec:
   compositeTypeRef:
     apiVersion: mediapackagev2.aws.livewyer.io/v1alpha1
-    kind: XChannel
+    kind: Channel
   mode: Pipeline
   pipeline:
     - step: go-templating
@@ -20,7 +20,7 @@ spec:
             {{ $id := .observed.composite.resource.metadata.name -}}
             {{ $spec := .observed.composite.resource.spec.forProvider -}}
 
-            apiVersion: cloudcontrol.aws.upbound.io/v1beta1
+            apiVersion: cloudcontrol.aws.m.upbound.io/v1beta1
             kind: Resource
             metadata:
               name: {{ $id }}

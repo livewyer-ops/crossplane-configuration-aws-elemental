@@ -16,7 +16,7 @@ spec:
 
 ---
 apiVersion: mediaconnect.aws.livewyer.io/v1alpha1
-kind: XFlow
+kind: Flow
 metadata:
   name: flow-test-b
   labels:

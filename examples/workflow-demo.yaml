@@ -1,5 +1,5 @@
 apiVersion: elemental.aws.livewyer.io/v1alpha1
-kind: XWorkflow
+kind: Workflow
 metadata:
   name: workflow-demo
   labels:
@@ -15,7 +15,7 @@ spec:
         - name: mediaconnect-flow-a
           spec:
             apiVersion: mediaconnect.aws.livewyer.io/v1alpha1
-            kind: XFlow
+            kind: Flow
             spec:
               forProvider:
                 flowSize: MEDIUM
@@ -28,7 +28,7 @@ spec:
         - name: mediaconnect-flow-b
           spec:
             apiVersion: mediaconnect.aws.livewyer.io/v1alpha1
-            kind: XFlow
+            kind: Flow
             spec:
               forProvider:
                 flowSize: MEDIUM
@@ -60,7 +60,7 @@ spec:
               source:
                 name: mediaconnect-flow-a
                 apiVersion: mediaconnect.aws.livewyer.io/v1alpha1
-                kind: XFlow
+                kind: Flow
                 key: status.atProvider.id
             - key: mediaConnectFlows
               type: list
@@ -68,7 +68,7 @@ spec:
               source:
                 name: mediaconnect-flow-b
                 apiVersion: mediaconnect.aws.livewyer.io/v1alpha1
-                kind: XFlow
+                kind: Flow
                 key: status.atProvider.id
           spec:
             apiVersion: medialive.aws.upbound.io/v1beta2
@@ -88,7 +88,7 @@ spec:
               source:
                 name: mediaconnect-flow-a
                 apiVersion: mediaconnect.aws.livewyer.io/v1alpha1
-                kind: XFlow
+                kind: Flow
                 key: status.atProvider.id
             - key: mediaConnectFlows
               type: list
@@ -96,7 +96,7 @@ spec:
               source:
                 name: mediaconnect-flow-b
                 apiVersion: mediaconnect.aws.livewyer.io/v1alpha1
-                kind: XFlow
+                kind: Flow
                 key: status.atProvider.id
           spec:
             apiVersion: medialive.aws.upbound.io/v1beta2
@@ -116,7 +116,7 @@ spec:
               source:
                 name: mediaconnect-flow-a
                 apiVersion: mediaconnect.aws.livewyer.io/v1alpha1
-                kind: XFlow
+                kind: Flow
                 key: status.atProvider.id
             - key: mediaConnectFlows
               type: list
@@ -124,7 +124,7 @@ spec:
               source:
                 name: mediaconnect-flow-b
                 apiVersion: mediaconnect.aws.livewyer.io/v1alpha1
-                kind: XFlow
+                kind: Flow
                 key: status.atProvider.id
           spec:
             apiVersion: medialive.aws.upbound.io/v1beta2
@@ -144,7 +144,7 @@ spec:
               source:
                 name: mediaconnect-flow-a
                 apiVersion: mediaconnect.aws.livewyer.io/v1alpha1
-                kind: XFlow
+                kind: Flow
                 key: status.atProvider.id
             - key: mediaConnectFlows
               type: list
@@ -152,7 +152,7 @@ spec:
               source:
                 name: mediaconnect-flow-b
                 apiVersion: mediaconnect.aws.livewyer.io/v1alpha1
-                kind: XFlow
+                kind: Flow
                 key: status.atProvider.id
           spec:
             apiVersion: medialive.aws.upbound.io/v1beta2
@@ -174,14 +174,14 @@ spec:
               source:
                 name: mediaconnect-flow-a
                 apiVersion: mediaconnect.aws.livewyer.io/v1alpha1
-                kind: XFlow
+                kind: Flow
                 key: status.atProvider.flowAvailabilityZone
             - key: availabilityZones
               type: list
               source:
                 name: mediaconnect-flow-b
                 apiVersion: mediaconnect.aws.livewyer.io/v1alpha1
-                kind: XFlow
+                kind: Flow
                 key: status.atProvider.flowAvailabilityZone
           spec:
             apiVersion: medialive.aws.upbound.io/v1beta2
@@ -200,14 +200,14 @@ spec:
               source:
                 name: mediaconnect-flow-a
                 apiVersion: mediaconnect.aws.livewyer.io/v1alpha1
-                kind: XFlow
+                kind: Flow
                 key: status.atProvider.flowAvailabilityZone
             - key: availabilityZones
               type: list
               source:
                 name: mediaconnect-flow-b
                 apiVersion: mediaconnect.aws.livewyer.io/v1alpha1
-                kind: XFlow
+                kind: Flow
                 key: status.atProvider.flowAvailabilityZone
           spec:
             apiVersion: medialive.aws.upbound.io/v1beta2
@@ -232,7 +232,7 @@ spec:
                 key: status.atProvider.id
           spec:
             apiVersion: medialive.aws.livewyer.io/v1alpha1
-            kind: XMultiplexProgram
+            kind: MultiplexProgram
             spec:
               forProvider:
                 programName: program_a
@@ -254,7 +254,7 @@ spec:
                 key: status.atProvider.id
           spec:
             apiVersion: medialive.aws.livewyer.io/v1alpha1
-            kind: XMultiplexProgram
+            kind: MultiplexProgram
             spec:
               forProvider:
                 programName: program_b
@@ -279,7 +279,7 @@ spec:
         - name: mediapackage-channel-endpoint
           spec:
             apiVersion: mediapackage.aws.livewyer.io/v1alpha1
-            kind: XOriginEndpoint
+            kind: OriginEndpoint
             spec:
               forProvider:
                 channelId: mediapackage-channel

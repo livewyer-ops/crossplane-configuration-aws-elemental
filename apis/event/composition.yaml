@@ -5,7 +5,7 @@ metadata:
 spec:
   compositeTypeRef:
     apiVersion: elemental.aws.livewyer.io/v1alpha1
-    kind: XEvent
+    kind: Event
   mode: Pipeline
   pipeline:
     - step: go-templating
@@ -103,10 +103,11 @@ spec:
 
             ---
 
-            apiVersion: kubernetes.crossplane.io/v1alpha2
+            apiVersion: kubernetes.m.crossplane.io/v1alpha1
             kind: Object
             metadata:
               name: {{ $.observed.composite.resource.spec.workflowTemplate.id }}
+              namespace: {{ default "default" $.observed.composite.resource.metadata.namespace }}
               annotations:
                 {{ setResourceNameAnnotation (printf "event.elemental.aws.livewyer.io/%s" $id) }}
             spec:
@@ -123,9 +124,10 @@ spec:
             ---
 
             apiVersion: elemental.aws.livewyer.io/v1alpha1
-            kind: XWorkflow
+            kind: Workflow
             metadata:
               name: {{ $id }}
+              namespace: {{ default "default" $.observed.composite.resource.metadata.namespace }}
               annotations:
                 {{ setResourceNameAnnotation (printf "workflow.elemental.aws.livewyer.io/%s" $id) }}
               labels:

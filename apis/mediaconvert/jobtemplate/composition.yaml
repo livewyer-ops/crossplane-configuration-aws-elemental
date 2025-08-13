@@ -5,7 +5,7 @@ metadata:
 spec:
   compositeTypeRef:
     apiVersion: mediaconvert.aws.livewyer.io/v1alpha1
-    kind: XJobTemplate
+    kind: JobTemplate
   mode: Pipeline
   pipeline:
     - step: go-templating
@@ -20,7 +20,7 @@ spec:
             {{ $id := .observed.composite.resource.metadata.name -}}
             {{ $spec := .observed.composite.resource.spec.forProvider -}}
 
-            apiVersion: cloudformation.aws.upbound.io/v1beta1
+            apiVersion: cloudformation.aws.m.upbound.io/v1beta1
             kind: Stack
             metadata:
               name: {{ $id }}

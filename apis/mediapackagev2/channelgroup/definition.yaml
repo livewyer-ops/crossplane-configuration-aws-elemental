@@ -1,13 +1,11 @@
-apiVersion: apiextensions.crossplane.io/v1
+apiVersion: apiextensions.crossplane.io/v2
 kind: CompositeResourceDefinition
 metadata:
-  name: xchannelgroups.mediapackagev2.aws.livewyer.io
+  name: channelgroups.mediapackagev2.aws.livewyer.io
 spec:
+  scope: Namespaced
   group: mediapackagev2.aws.livewyer.io
   names:
-    kind: XChannelGroup
-    plural: xchannelgroups
-  claimNames:
     kind: ChannelGroup
     plural: channelgroups
   versions:

@@ -1,13 +1,11 @@
-apiVersion: apiextensions.crossplane.io/v1
+apiVersion: apiextensions.crossplane.io/v2
 kind: CompositeResourceDefinition
 metadata:
-  name: xgateways.mediaconnect.aws.livewyer.io
+  name: gateways.mediaconnect.aws.livewyer.io
 spec:
+  scope: Namespaced
   group: mediaconnect.aws.livewyer.io
   names:
-    kind: XGateway
-    plural: xgateways
-  claimNames:
     kind: Gateway
     plural: gateways
   versions:

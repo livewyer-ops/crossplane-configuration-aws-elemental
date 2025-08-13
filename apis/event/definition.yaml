@@ -1,13 +1,11 @@
-apiVersion: apiextensions.crossplane.io/v1
+apiVersion: apiextensions.crossplane.io/v2
 kind: CompositeResourceDefinition
 metadata:
-  name: xevents.elemental.aws.livewyer.io
+  name: events.elemental.aws.livewyer.io
 spec:
+  scope: Namespaced
   group: elemental.aws.livewyer.io
   names:
-    kind: XEvent
-    plural: xevents
-  claimNames:
     kind: Event
     plural: events
   versions:

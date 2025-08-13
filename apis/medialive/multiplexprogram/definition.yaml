@@ -1,13 +1,11 @@
-apiVersion: apiextensions.crossplane.io/v1
+apiVersion: apiextensions.crossplane.io/v2
 kind: CompositeResourceDefinition
 metadata:
-  name: xmultiplexprograms.medialive.aws.livewyer.io
+  name: multiplexprograms.medialive.aws.livewyer.io
 spec:
+  scope: Namespaced
   group: medialive.aws.livewyer.io
   names:
-    kind: XMultiplexProgram
-    plural: xmultiplexprograms
-  claimNames:
     kind: MultiplexProgram
     plural: multiplexprograms
   versions:

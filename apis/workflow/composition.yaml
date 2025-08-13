@@ -5,7 +5,7 @@ metadata:
 spec:
   compositeTypeRef:
     apiVersion: elemental.aws.livewyer.io/v1alpha1
-    kind: XWorkflow
+    kind: Workflow
   mode: Pipeline
   pipeline:
     - step: go-templating

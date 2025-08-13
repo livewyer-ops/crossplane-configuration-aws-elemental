@@ -1,5 +1,5 @@
 apiVersion: elemental.aws.livewyer.io/v1alpha1
-kind: XEvent
+kind: Event
 metadata:
   name: workflow-usecase-1
   labels:
@@ -12,5 +12,7 @@ spec:
   workflowTemplate:
     id: workflow-usecase-1
     parameters:
+      name: workflow-usecase-1
+      s3_bucket: whatever
       network: 192.168.0.100/32
       iamRole: arn:aws:iam::123456789012:role/MediaLiveAccessRole

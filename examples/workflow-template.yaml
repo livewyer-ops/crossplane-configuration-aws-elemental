@@ -1,5 +1,5 @@
 apiVersion: elemental.aws.livewyer.io/v1alpha1
-kind: XWorkflowTemplate
+kind: WorkflowTemplate
 metadata:
   name: workflow-usecase-1
   labels:
@@ -11,7 +11,7 @@ spec:
         - name: medialive-network
           spec:
             apiVersion: medialive.aws.livewyer.io/v1alpha1
-            kind: XNetwork
+            kind: Network
             spec:
               forProvider:
                 ipPools:
@@ -60,7 +60,7 @@ spec:
         - name: mediapackage-channel-endpoint
           spec:
             apiVersion: mediapackage.aws.livewyer.io/v1alpha1
-            kind: XOriginEndpoint
+            kind: OriginEndpoint
             spec:
               forProvider:
                 channelId: mediapackage-channel

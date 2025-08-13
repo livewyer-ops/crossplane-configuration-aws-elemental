@@ -5,7 +5,7 @@ metadata:
 spec:
   compositeTypeRef:
     apiVersion: mediaconnect.aws.livewyer.io/v1alpha1
-    kind: XFlow
+    kind: Flow
   mode: Pipeline
   pipeline:
     - step: go-templating
@@ -21,7 +21,7 @@ spec:
             {{ $spec := .observed.composite.resource.spec.forProvider -}}
             {{ $status := getCompositeResource . | getResourceCondition "atProvider" }}
 
-            apiVersion: cloudcontrol.aws.upbound.io/v1beta1
+            apiVersion: cloudcontrol.aws.m.upbound.io/v1beta1
             kind: Resource
             metadata:
               name: {{ $id }}

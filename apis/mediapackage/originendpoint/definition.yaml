@@ -1,13 +1,11 @@
-apiVersion: apiextensions.crossplane.io/v1
+apiVersion: apiextensions.crossplane.io/v2
 kind: CompositeResourceDefinition
 metadata:
-  name: xoriginendpoints.mediapackage.aws.livewyer.io
+  name: originendpoints.mediapackage.aws.livewyer.io
 spec:
+  scope: Namespaced
   group: mediapackage.aws.livewyer.io
   names:
-    kind: XOriginEndpoint
-    plural: xoriginendpoints
-  claimNames:
     kind: OriginEndpoint
     plural: originendpoints
   versions:

@@ -1,13 +1,11 @@
-apiVersion: apiextensions.crossplane.io/v1
+apiVersion: apiextensions.crossplane.io/v2
 kind: CompositeResourceDefinition
 metadata:
-  name: xworkflowtemplates.elemental.aws.livewyer.io
+  name: workflowtemplates.elemental.aws.livewyer.io
 spec:
+  scope: Namespaced
   group: elemental.aws.livewyer.io
   names:
-    kind: XWorkflowTemplate
-    plural: xworkflowtemplates
-  claimNames:
     kind: WorkflowTemplate
     plural: workflowtemplates
   versions:
