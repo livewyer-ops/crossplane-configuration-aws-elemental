@@ -18,7 +18,7 @@ spec:
                   - Cidr: "{{ network }}"
         - name: "{{ name }}-medialive-network-sg"
           spec:
-            apiVersion: medialive.aws.upbound.io/v1beta1
+            apiVersion: medialive.aws.m.upbound.io/v1beta1
             kind: InputSecurityGroup
             spec:
               forProvider:
@@ -29,7 +29,7 @@ spec:
       resources:
         - name: "{{ name }}-medialive-input-a"
           spec:
-            apiVersion: medialive.aws.upbound.io/v1beta2
+            apiVersion: medialive.aws.m.upbound.io/v1beta1
             kind: Input
             spec:
               forProvider:
@@ -39,7 +39,7 @@ spec:
                 type: RTP_PUSH
         - name: "{{ name }}-medialive-input-b"
           spec:
-            apiVersion: medialive.aws.upbound.io/v1beta2
+            apiVersion: medialive.aws.m.upbound.io/v1beta1
             kind: Input
             spec:
               forProvider:
@@ -52,7 +52,7 @@ spec:
       resources:
         - name: "{{ name }}-mediapackage-channel"
           spec:
-            apiVersion: mediapackage.aws.upbound.io/v1beta1
+            apiVersion: mediapackage.aws.m.upbound.io/v1beta1
             kind: Channel
             spec:
               forProvider:
@@ -73,7 +73,7 @@ spec:
       resources:
         - name: "{{ name }}-medialive-channel"
           spec:
-            apiVersion: medialive.aws.upbound.io/v1beta2
+            apiVersion: medialive.aws.m.upbound.io/v1beta1
             kind: Channel
             spec:
               forProvider:

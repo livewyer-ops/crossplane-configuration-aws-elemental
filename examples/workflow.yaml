@@ -125,7 +125,7 @@ spec:
       resources:
         - name: medialive-network-sg
           spec:
-            apiVersion: medialive.aws.upbound.io/v1beta1
+            apiVersion: medialive.aws.m.upbound.io/v1beta1
             kind: InputSecurityGroup
             spec:
               forProvider:
@@ -153,7 +153,7 @@ spec:
                 kind: Flow
                 key: status.atProvider.id
           spec:
-            apiVersion: medialive.aws.upbound.io/v1beta2
+            apiVersion: medialive.aws.m.upbound.io/v1beta1
             kind: Input
             spec:
               forProvider:
@@ -181,7 +181,7 @@ spec:
                 kind: Flow
                 key: status.atProvider.id
           spec:
-            apiVersion: medialive.aws.upbound.io/v1beta2
+            apiVersion: medialive.aws.m.upbound.io/v1beta1
             kind: Input
             spec:
               forProvider:
@@ -209,7 +209,7 @@ spec:
                 kind: Flow
                 key: status.atProvider.id
           spec:
-            apiVersion: medialive.aws.upbound.io/v1beta2
+            apiVersion: medialive.aws.m.upbound.io/v1beta1
             kind: Input
             spec:
               forProvider:
@@ -238,7 +238,7 @@ spec:
                 kind: Flow
                 key: status.atProvider.flowAvailabilityZone
           spec:
-            apiVersion: medialive.aws.upbound.io/v1beta2
+            apiVersion: medialive.aws.m.upbound.io/v1beta1
             kind: Multiplex
             spec:
               forProvider:
@@ -266,7 +266,7 @@ spec:
                 kind: Flow
                 key: status.atProvider.flowAvailabilityZone
           spec:
-            apiVersion: medialive.aws.upbound.io/v1beta2
+            apiVersion: medialive.aws.m.upbound.io/v1beta1
             kind: Multiplex
             spec:
               forProvider:
@@ -285,7 +285,7 @@ spec:
             - key: multiplexId
               source:
                 name: medialive-multiplex-a
-                apiVersion: medialive.aws.upbound.io/v1beta2
+                apiVersion: medialive.aws.m.upbound.io/v1beta1
                 kind: Multiplex
                 key: status.atProvider.id
           spec:
@@ -307,7 +307,7 @@ spec:
             - key: multiplexId
               source:
                 name: medialive-multiplex-b
-                apiVersion: medialive.aws.upbound.io/v1beta2
+                apiVersion: medialive.aws.m.upbound.io/v1beta1
                 kind: Multiplex
                 key: status.atProvider.id
           spec:
@@ -329,7 +329,7 @@ spec:
       resources:
         - name: mediapackage-channel
           spec:
-            apiVersion: mediapackage.aws.upbound.io/v1beta1
+            apiVersion: mediapackage.aws.m.upbound.io/v1beta1
             kind: Channel
             spec:
               forProvider:
@@ -352,7 +352,7 @@ spec:
       resources:
         - name: medialive-channel-a
           spec:
-            apiVersion: medialive.aws.upbound.io/v1beta2
+            apiVersion: medialive.aws.m.upbound.io/v1beta1
             kind: Channel
             spec:
               forProvider:
@@ -448,11 +448,11 @@ spec:
               subKeyPatchMethod: merge
               source:
                 name: medialive-multiplex-a
-                apiVersion: medialive.aws.upbound.io/v1beta2
+                apiVersion: medialive.aws.m.upbound.io/v1beta1
                 kind: Multiplex
                 key: status.atProvider.id
           spec:
-            apiVersion: medialive.aws.upbound.io/v1beta2
+            apiVersion: medialive.aws.m.upbound.io/v1beta1
             kind: Channel
             spec:
               forProvider:
@@ -527,11 +527,11 @@ spec:
               subKeyPatchMethod: merge
               source:
                 name: medialive-multiplex-b
-                apiVersion: medialive.aws.upbound.io/v1beta2
+                apiVersion: medialive.aws.m.upbound.io/v1beta1
                 kind: Multiplex
                 key: status.atProvider.id
           spec:
-            apiVersion: medialive.aws.upbound.io/v1beta2
+            apiVersion: medialive.aws.m.upbound.io/v1beta1
             kind: Channel
             spec:
               forProvider:
