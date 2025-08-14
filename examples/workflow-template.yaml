@@ -8,7 +8,7 @@ spec:
   steps:
     - name: medialive-network
       resources:
-        - name: medialive-network
+        - name: "{{ name }}-medialive-network"
           spec:
             apiVersion: medialive.aws.livewyer.io/v1alpha1
             kind: Network
@@ -16,7 +16,7 @@ spec:
               forProvider:
                 ipPools:
                   - Cidr: "{{ network }}"
-        - name: medialive-network-sg
+        - name: "{{ name }}-medialive-network-sg"
           spec:
             apiVersion: medialive.aws.upbound.io/v1beta1
             kind: InputSecurityGroup
@@ -27,43 +27,43 @@ spec:
 
     - name: medialive-input
       resources:
-        - name: medialive-input-a
+        - name: "{{ name }}-medialive-input-a"
           spec:
             apiVersion: medialive.aws.upbound.io/v1beta2
             kind: Input
             spec:
               forProvider:
-                name: medialive-input-a
+                name: "{{ name }}-medialive-input-a"
                 inputSecurityGroupsRefs:
-                  - name: medialive-network-sg
+                  - name: "{{ name }}-medialive-network-sg"
                 type: RTP_PUSH
-        - name: medialive-input-b
+        - name: "{{ name }}-medialive-input-b"
           spec:
             apiVersion: medialive.aws.upbound.io/v1beta2
             kind: Input
             spec:
               forProvider:
-                name: medialive-input-b
+                name: "{{ name }}-medialive-input-b"
                 inputSecurityGroupsRefs:
-                  - name: medialive-network-sg
+                  - name: "{{ name }}-medialive-network-sg"
                 type: RTP_PUSH
 
     - name: mediapackage-channel
       resources:
-        - name: mediapackage-channel
+        - name: "{{ name }}-mediapackage-channel"
           spec:
             apiVersion: mediapackage.aws.upbound.io/v1beta1
             kind: Channel
             spec:
               forProvider:
-                channelId: mediapackage-channel
-        - name: mediapackage-channel-endpoint
+                channelId: "{{ name }}-mediapackage-channel"
+        - name: "{{ name }}-mediapackage-channel-endpoint"
           spec:
             apiVersion: mediapackage.aws.livewyer.io/v1alpha1
             kind: OriginEndpoint
             spec:
               forProvider:
-                channelId: mediapackage-channel
+                channelId: "{{ name }}-mediapackage-channel"
                 origination: ALLOW
                 cmafPackage:
                   HlsManifests:
@@ -71,13 +71,13 @@ spec:
 
     - name: medialive-channel
       resources:
-        - name: medialive-channel
+        - name: "{{ name }}-medialive-channel"
           spec:
             apiVersion: medialive.aws.upbound.io/v1beta2
             kind: Channel
             spec:
               forProvider:
-                name: medialive-channel
+                name: "{{ name }}-medialive-channel"
                 channelClass: SINGLE_PIPELINE
                 roleArn: "{{ iamRole }}"
                 inputSpecification:
@@ -85,16 +85,16 @@ spec:
                   inputResolution: SD
                   maximumBitrate: MAX_10_MBPS
                 inputAttachments:
-                  - inputAttachmentName: medialive-input-a
+                  - inputAttachmentName: "{{ name }}-medialive-input-a"
                     inputIdRef:
-                      name: medialive-input-a
-                  - inputAttachmentName: medialive-input-b
+                      name: "{{ name }}-medialive-input-a"
+                  - inputAttachmentName: "{{ name }}-medialive-input-b"
                     inputIdRef:
-                      name: medialive-input-b
+                      name: "{{ name }}-medialive-input-b"
                 destinations:
-                  - id: mediapackage
+                  - id: "{{ name }}-mediapackage"
                     mediaPackageSettings:
-                      - channelId: mediapackage-channel
+                      - channelId: "{{ name }}-mediapackage-channel"
                 encoderSettings:
                   audioDescriptions:
                     - name: sample-audio
@@ -112,9 +112,9 @@ spec:
                     - outputGroupSettings:
                         mediaPackageGroupSettings:
                           destination:
-                            destinationRefId: mediapackage
+                            destinationRefId: "{{ name }}-mediapackage"
                       outputs:
-                        - outputName: mediapackage
+                        - outputName: "{{ name }}-mediapackage"
                           audioDescriptionNames:
                             - sample-audio
                           videoDescriptionName: sample-video

@@ -18,65 +18,69 @@ spec:
         inline:
           template: |
             {{- define "setNestedValue" -}}
-            {{- $dict := index . 0 -}}
-            {{- $path := index . 1 -}}
-            {{- $pathType := index . 2 -}}
-            {{- $value := index . 3 -}}
-            {{- $subKey := index . 4 -}}
-            {{- $subKeyMerge := index . 5 -}}
-            {{- $parts := regexSplit "\\." $path -1 -}}
-            {{- if eq (len $parts) 1 -}}
-                {{- if eq $pathType "list" -}}
-                  {{- if eq $subKey "null" -}}
-                    {{- $valueList := dig (first $parts) list $dict -}}
-                    {{- $_ := set $dict (first $parts) (append $valueList $value) -}}
-                  {{- else -}}
-                    {{/* TODO: review and optimize the steps to set complex nested value structure */}}
-                    {{- if eq (len (regexSplit "\\." $subKey -1)) 1 -}}
-                      {{- if eq $subKeyMerge "merge" -}}
-                        {{- $subValue := first (dig (first $parts) list $dict) -}}
-                        {{- $_ := set $dict (first $parts) (list (merge $subValue (dict $subKey $value))) -}}
-                      {{- else -}}
-                        {{- $valueList := dig (first $parts) list $dict -}}
-                        {{- $valueDict := dict $subKey $value -}}
-                        {{- $_ := set $dict (first $parts) (append $valueList $valueDict) -}}
-                      {{- end -}}
+              {{- $dict := index . 0 -}}
+              {{- $path := index . 1 -}}
+              {{- $pathType := index . 2 -}}
+              {{- $value := index . 3 -}}
+              {{- $subKey := index . 4 -}}
+              {{- $subKeyMerge := index . 5 -}}
+              {{- $parts := regexSplit "\\." $path -1 -}}
+
+              {{- if eq (len $parts) 1 -}}
+                  {{- if eq $pathType "list" -}}
+                    {{- if eq $subKey "null" -}}
+                      {{- $valueList := dig (first $parts) list $dict -}}
+                      {{- $_ := set $dict (first $parts) (append $valueList $value) -}}
                     {{- else -}}
-                      {{- $subValue := first (dig (first $parts) list $dict) -}}
-                      {{- $subKeyParts := regexSplit "\\." $subKey -1 -}}
-                      {{- $subKeyFirst := first $subKeyParts -}}
-                      {{- if not (hasKey $subValue $subKeyFirst) -}}
-                        {{- $_ := set $subValue $subKeyFirst (dict) -}}
-                      {{- else if eq (len (rest $subKeyParts)) 1 -}}
-                        {{- $_ := set $subValue $subKeyFirst (dig $subKeyFirst dict $subValue) -}}
-                        {{- $_ := set (dig $subKeyFirst dict $subValue) (first (rest $subKeyParts)) $value -}}
+                      {{/* TODO: review and optimize the steps to set complex nested value structure */}}
+                      {{- if eq (len (regexSplit "\\." $subKey -1)) 1 -}}
+                        {{- if eq $subKeyMerge "merge" -}}
+                          {{- $subValue := first (dig (first $parts) list $dict) -}}
+                          {{- $_ := set $dict (first $parts) (list (merge $subValue (dict $subKey $value))) -}}
+                        {{- else -}}
+                          {{- $valueList := dig (first $parts) list $dict -}}
+                          {{- $valueDict := dict $subKey $value -}}
+                          {{- $_ := set $dict (first $parts) (append $valueList $valueDict) -}}
+                        {{- end -}}
                       {{- else -}}
-                        {{- $_ := set (dig $subKeyFirst dict $subValue) (first (rest $subKeyParts)) dict -}}
-                        {{- template "setNestedValue" (list $dict (join "." (rest (rest ($subKeyParts)))) $pathType $value $subKey $subKeyMerge) -}}
+                        {{- $subValue := first (dig (first $parts) list $dict) -}}
+                        {{- $subKeyParts := regexSplit "\\." $subKey -1 -}}
+                        {{- $subKeyFirst := first $subKeyParts -}}
+                        {{- if not (hasKey $subValue $subKeyFirst) -}}
+                          {{- $_ := set $subValue $subKeyFirst (dict) -}}
+                        {{- else if eq (len (rest $subKeyParts)) 1 -}}
+                          {{- $_ := set $subValue $subKeyFirst (dig $subKeyFirst dict $subValue) -}}
+                          {{- $_ := set (dig $subKeyFirst dict $subValue) (first (rest $subKeyParts)) $value -}}
+                        {{- else -}}
+                          {{- $_ := set (dig $subKeyFirst dict $subValue) (first (rest $subKeyParts)) dict -}}
+                          {{- template "setNestedValue" (list $dict (join "." (rest (rest ($subKeyParts)))) $pathType $value $subKey $subKeyMerge) -}}
+                        {{- end -}}
                       {{- end -}}
                     {{- end -}}
+                  {{- else -}}
+                    {{- $_ := set $dict (first $parts) $value -}}
                   {{- end -}}
-                {{- else -}}
-                  {{- $_ := set $dict (first $parts) $value -}}
+              {{- else -}}
+                {{- $firstKey := first $parts -}}
+                {{- if not (hasKey $dict $firstKey) -}}
+                  {{- $_ := set $dict $firstKey (dict) -}}
                 {{- end -}}
-            {{- else -}}
-              {{- $firstKey := first $parts -}}
-              {{- if not (hasKey $dict $firstKey) -}}
-                {{- $_ := set $dict $firstKey (dict) -}}
+                {{- template "setNestedValue" (list (index $dict $firstKey) (join "." (rest $parts)) $pathType $value $subKey $subKeyMerge) -}}
               {{- end -}}
-              {{- template "setNestedValue" (list (index $dict $firstKey) (join "." (rest $parts)) $pathType $value $subKey $subKeyMerge) -}}
-            {{- end -}}
+
             {{- end -}}
 
             {{- define "digNestedPath" -}}
-            {{- $path := index . 0 -}}
-            {{- $dict := index . 1 -}}
-            {{- $parts := regexSplit "\\." $path -1 -}}
-            {{- if eq (len $parts) 1 -}}
-              {{- dig (first $parts) "" $dict -}}
-            {{- else -}}
-              {{- template "digNestedPath" (list (join "." (rest $parts)) (dig (first $parts) dict $dict)) -}}
-            {{- end -}}
+              {{- $path := index . 0 -}}
+              {{- $dict := index . 1 -}}
+
+              {{- $parts := regexSplit "\\." $path -1 -}}
+              {{- if eq (len $parts) 1 -}}
+                {{- dig (first $parts) "" $dict -}}
+              {{- else -}}
+                {{- template "digNestedPath" (list (join "." (rest $parts)) (dig (first $parts) dict $dict)) -}}
+              {{- end -}}
+
             {{- end -}}
 
             {{- range $step := $.observed.composite.resource.spec.steps }}

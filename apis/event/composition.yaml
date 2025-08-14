@@ -103,22 +103,14 @@ spec:
 
             ---
 
-            apiVersion: kubernetes.m.crossplane.io/v1alpha1
-            kind: Object
+            apiVersion: elemental.aws.livewyer.io/v1alpha1
+            kind: WorkflowTemplate
             metadata:
               name: {{ $.observed.composite.resource.spec.workflowTemplate.id }}
               namespace: {{ default "default" $.observed.composite.resource.metadata.namespace }}
               annotations:
                 {{ setResourceNameAnnotation (printf "event.elemental.aws.livewyer.io/%s" $id) }}
             spec:
-              forProvider:
-                manifest:
-                  apiVersion: nop.crossplane.io/v1alpha1
-                  kind: NopResource
-                  metadata:
-                    name: {{ $.observed.composite.resource.spec.workflowTemplate.id }}
-              providerConfigRef:
-                name: kubernetes-provider
               managementPolicies: ["Observe"]
 
             ---
@@ -133,7 +125,7 @@ spec:
               labels:
                 elemental.aws.livewyer.io/workflow: {{ $id }}
             spec:
-              {{- $templateSource := get (getComposedResource . $templateId).status.atProvider.manifest.spec.forProvider "fields" -}}
+              {{- $templateSource := get (getComposedResource . $templateId) "spec" -}}
               {{ $processedTemplate := include "replaceTemplateVars" (list $templateSource $params) | fromYaml }}
               forProvider: {{ default (default (dict) $processedTemplate.forProvider) $.observed.composite.resource.spec.forProvider | toJson }}
               providerConfigRef: {{ default (default (dict "name" "default") $processedTemplate.providerConfigRef) $.observed.composite.resource.spec.providerConfigRef | toJson }}

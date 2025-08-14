@@ -8,33 +8,6 @@ spec:
     kind: WorkflowTemplate
   mode: Pipeline
   pipeline:
-    - step: go-templating
-      functionRef:
-        name: function-go-templating
-      input:
-        apiVersion: gotemplating.fn.crossplane.io/v1beta1
-        kind: GoTemplate
-        source: Inline
-        inline:
-          template: |
-            apiVersion: nop.crossplane.io/v1alpha1
-            kind: NopResource
-            metadata:
-              annotations:
-                {{ setResourceNameAnnotation (printf "workflowtemplate.elemental.aws.livewyer.io/%s" $.observed.composite.resource.metadata.name) }}
-              labels:
-                elemental.aws.livewyer.io/workflowtemplate: {{ $.observed.composite.resource.metadata.name }}
-              name: {{ $.observed.composite.resource.metadata.name }}
-              namespace: {{ default "default" $.observed.composite.resource.metadata.namespace }}
-            spec:
-              forProvider:
-                conditionAfter:
-                  - time: 0s
-                    conditionType: Ready
-                    conditionStatus: "True"
-                    conditionReason: Available
-                fields: {{ $.observed.composite.resource.spec | toJson }}
-
     - step: automatically-detect-ready-composed-resources
       functionRef:
         name: function-auto-ready
