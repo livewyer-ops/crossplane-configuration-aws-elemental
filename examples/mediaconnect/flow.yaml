@@ -11,8 +11,11 @@ spec:
     region: us-east-1
     flowSize: MEDIUM
     source:
-      GatewayBridgeSource:
-        BridgeArn: ""
+      Name: source-a
+      WhitelistCidr: 192.168.0.100/32
+      IngestPort: 3000
+      Protocol: rtp
+      MaxBitrate: 100000
 
 ---
 apiVersion: mediaconnect.aws.livewyer.io/v1alpha1
