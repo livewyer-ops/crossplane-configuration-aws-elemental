@@ -6,6 +6,7 @@ metadata:
     mediaconnect.aws.livewyer.io/gateway: mediaconnect-gateway-a
 spec:
   providerConfigRef:
+    kind: ProviderConfig
     name: aws
   forProvider:
     region: us-east-1

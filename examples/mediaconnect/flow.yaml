@@ -27,6 +27,7 @@ metadata:
     mediaconnect.aws.livewyer.io/flow: flow-test-b
 spec:
   providerConfigRef:
+    kind: ProviderConfig
     name: aws
   forProvider:
     region: us-east-1

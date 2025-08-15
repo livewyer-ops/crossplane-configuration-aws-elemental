@@ -6,6 +6,7 @@ metadata:
     mediapackage.aws.livewyer.io/channel: channel-test
 spec:
   providerConfigRef:
+    kind: ProviderConfig
     name: aws
   forProvider:
     region: us-east-1
@@ -20,6 +21,7 @@ metadata:
     mediapackage.aws.livewyer.io/originendpoint: originendpoint-test
 spec:
   providerConfigRef:
+    kind: ProviderConfig
     name: aws
   forProvider:
     region: us-east-1

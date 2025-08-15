@@ -4,6 +4,7 @@ metadata:
   name: multiplex-test
 spec:
   providerConfigRef:
+    kind: ProviderConfig
     name: aws
   forProvider:
     region: us-east-1
@@ -25,6 +26,7 @@ metadata:
   name: multiplexprogram-test
 spec:
   providerConfigRef:
+    kind: ProviderConfig
     name: aws
   forProvider:
     region: us-east-1

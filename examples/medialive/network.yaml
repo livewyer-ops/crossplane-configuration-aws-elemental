@@ -6,6 +6,7 @@ metadata:
     mediaconnect.aws.livewyer.io/network: network-test
 spec:
   providerConfigRef:
+    kind: ProviderConfig
     name: aws
   forProvider:
     region: us-east-1

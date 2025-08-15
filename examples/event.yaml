@@ -6,6 +6,7 @@ metadata:
     elemental.aws.livewyer.io/workflow: workflow-usecase-1
 spec:
   providerConfigRef:
+    kind: ProviderConfig
     name: aws
   forProvider:
     region: us-east-1
