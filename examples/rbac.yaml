@@ -3,12 +3,18 @@ kind: ClusterRole
 metadata:
   name: cluster-aws-elemental-admin
 rules:
+  # - apiGroups:
+  #     - aws.upbound.io
+  #     - aws.livewyer.io
+  #   resources:
+  #     - "*"
+  #   verbs:
+  #     - "*"
   - apiGroups:
-      - aws.upbound.io
-      - aws.livewyer.io
-      - nop.crossplane.io
+      - ""
     resources:
-      - "*"
+      - services
+      - configmaps
     verbs:
       - "*"
 

@@ -58,13 +58,6 @@ spec:
                         type: string
                   required:
                     - ipPools
-                deletionPolicy:
-                  type: string
-                  enum:
-                    - Delete
-                    - Orphan
-                  default: Delete
-                  description: "DeletionPolicy specifies what will happen to the underlying external when this managed resource is deleted."
                 managementPolicies:
                   type: array
                   items:
@@ -81,9 +74,12 @@ spec:
                 providerConfigRef:
                   type: object
                   properties:
+                    kind:
+                      type: string
                     name:
                       type: string
                   required:
+                    - kind
                     - name
                   description: "ProviderConfigReference specifies how the provider that will be used to create, observe, update, and delete this managed resource should be configured."
                 publishConnectionDetailsTo:
