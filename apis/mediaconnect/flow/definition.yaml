@@ -424,6 +424,10 @@ spec:
                 writeConnectionSecretsToNamespace:
                   type: string
                   description: "WriteConnectionSecretsToNamespace specifies the namespace in which the connection secrets of this managed resource should be written."
+                exportEndpointAsService:
+                  type: boolean
+                  default: true
+                  description: "exportEndpointAsService specifies whether to export the Flow endpoint as Kubernetes headless service using external-name."
               required:
                 - forProvider
             status:
