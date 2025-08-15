@@ -24,6 +24,7 @@ spec:
             kind: Stack
             metadata:
               name: {{ $id }}
+              namespace: {{ default "default" $.observed.composite.resource.metadata.namespace }}
               annotations:
                 {{ setResourceNameAnnotation (printf "jobtemplate.mediaconvert.aws.livewyer.io/%s" $id) }}
               labels:

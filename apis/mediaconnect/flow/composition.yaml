@@ -25,6 +25,7 @@ spec:
             kind: Resource
             metadata:
               name: {{ $id }}
+              namespace: {{ default "default" $.observed.composite.resource.metadata.namespace }}
               annotations:
                 {{ setResourceNameAnnotation (printf "flow.mediaconnect.aws.livewyer.io/%s" $id) }}
               labels:
@@ -80,19 +81,6 @@ spec:
 
             ---
 
-            {{ $awscc := getComposedResource . (printf "flow.mediaconnect.aws.livewyer.io/%s" $id) }}
-            apiVersion: {{ .observed.composite.resource.apiVersion }}
-            kind: {{ .observed.composite.resource.kind }}
-            metadata:
-              labels:
-                mediaconnect.aws.livewyer.io/flow: {{ $id }}
-            status:
-              {{- $properties := dict }}
-              {{- $properties := (fromJson (default "{}" $awscc.status.atProvider.properties)) }}
-              atProvider: {{ toJson (merge $awscc.status.atProvider (dict "flowAvailabilityZone" (dig "FlowAvailabilityZone" "" $properties))) }}
-
-            ---
-
             {{- if and (default true $.observed.composite.resource.spec.exportEndpointAsService) (get (fromJson (get $awscc.status.atProvider "properties")) "EgressIp") (get (fromJson $awscc.status.atProvider.properties) "IngestPort") -}}
             apiVersion: v1
             kind: Service
@@ -102,6 +90,7 @@ spec:
               labels:
                 mediaconnect.aws.livewyer.io/flow: {{ $id }}
               name: {{ $id }}
+              namespace: {{ default "default" $.observed.composite.resource.metadata.namespace }}
               spec:
                 type: ExternalName
                 externalName: {{ get (fromJson $awscc.status.atProvider.properties) "EgressIp" }}
@@ -112,6 +101,19 @@ spec:
                     protocol: TCP_UDP
                     targetPort: {{ get (fromJson $awscc.status.atProvider.properties) "IngestPort" | int }}
             {{- end -}}
+
+            ---
+
+            {{ $awscc := getComposedResource . (printf "flow.mediaconnect.aws.livewyer.io/%s" $id) }}
+            apiVersion: {{ .observed.composite.resource.apiVersion }}
+            kind: {{ .observed.composite.resource.kind }}
+            metadata:
+              labels:
+                mediaconnect.aws.livewyer.io/flow: {{ $id }}
+            status:
+              {{- $properties := dict }}
+              {{- $properties := (fromJson (default "{}" $awscc.status.atProvider.properties)) }}
+              atProvider: {{ toJson (merge $awscc.status.atProvider (dict "flowAvailabilityZone" (dig "FlowAvailabilityZone" "" $properties))) }}
 
     - step: automatically-detect-ready-composed-resources
       functionRef:

@@ -24,6 +24,7 @@ spec:
             kind: Resource
             metadata:
               name: {{ $id }}
+              namespace: {{ default "default" $.observed.composite.resource.metadata.namespace }}
               annotations:
                 {{ setResourceNameAnnotation (printf "gateway.mediaconnect.aws.livewyer.io/%s" $id) }}
               labels:
