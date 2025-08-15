@@ -352,6 +352,8 @@ spec:
       version: ">=v2"
     - provider: xpkg.upbound.io/upbound/provider-aws-cloudformation
       version: ">=v2"
+    - provider: xpkg.upbound.io/upbound/provider-kubernetes
+      version: ">=v1"
     - function: xpkg.upbound.io/upbound/function-go-templating
       version: ">=v0.10.0"
     - function: xpkg.upbound.io/upbound/function-auto-ready

@@ -81,29 +81,6 @@ spec:
 
             ---
 
-            {{- if and (default true $.observed.composite.resource.spec.exportEndpointAsService) (get (fromJson (get $awscc.status.atProvider "properties")) "EgressIp") (get (fromJson $awscc.status.atProvider.properties) "IngestPort") -}}
-            apiVersion: v1
-            kind: Service
-            metadata:
-              annotations:
-                {{ setResourceNameAnnotation (printf "flow.mediaconnect.aws.livewyer.io/%s" $id) }}
-              labels:
-                mediaconnect.aws.livewyer.io/flow: {{ $id }}
-              name: {{ $id }}
-              namespace: {{ default "default" $.observed.composite.resource.metadata.namespace }}
-              spec:
-                type: ExternalName
-                externalName: {{ get (fromJson $awscc.status.atProvider.properties) "EgressIp" }}
-                clusterIP: None
-                ports:
-                  - name: input
-                    port: {{ get (fromJson $awscc.status.atProvider.properties) "IngestPort" | int }}
-                    protocol: TCP_UDP
-                    targetPort: {{ get (fromJson $awscc.status.atProvider.properties) "IngestPort" | int }}
-            {{- end -}}
-
-            ---
-
             {{ $awscc := getComposedResource . (printf "flow.mediaconnect.aws.livewyer.io/%s" $id) }}
             apiVersion: {{ .observed.composite.resource.apiVersion }}
             kind: {{ .observed.composite.resource.kind }}
@@ -114,6 +91,52 @@ spec:
               {{- $properties := dict }}
               {{- $properties := (fromJson (default "{}" $awscc.status.atProvider.properties)) }}
               atProvider: {{ toJson (merge $awscc.status.atProvider (dict "flowAvailabilityZone" (dig "FlowAvailabilityZone" "" $properties))) }}
+
+    - step: go-templating-svc
+      functionRef:
+        name: function-go-templating
+      input:
+        apiVersion: gotemplating.fn.crossplane.io/v1beta1
+        kind: GoTemplate
+        source: Inline
+        inline:
+          template: |
+            {{ $id := .observed.composite.resource.metadata.name -}}
+            {{ $awscc := getComposedResource . (printf "flow.mediaconnect.aws.livewyer.io/%s" $id) }}
+
+            {{ if and (default true $.observed.composite.resource.spec.exportEndpointAsService) (dig "Source" "IngestIp" "" (fromJson (default "{}" $awscc.status.atProvider.properties))) (dig "Source" "IngestPort" "" (fromJson (default "{}" $awscc.status.atProvider.properties))) }}
+            apiVersion: kubernetes.m.crossplane.io/v1alpha1
+            kind: Object
+            metadata:
+              annotations:
+                {{ setResourceNameAnnotation (printf "svc.flow.mediaconnect.aws.livewyer.io/%s" $id) }}
+              name: {{ $id }}
+              namespace: {{ default "default" $.observed.composite.resource.metadata.namespace }}
+              labels:
+                mediaconnect.aws.livewyer.io/flow: {{ $id }}
+            spec:
+              forProvider:
+                manifest:
+                  apiVersion: v1
+                  kind: Service
+                  metadata:
+                    name: {{ $id }}
+                    namespace: {{ default "default" $.observed.composite.resource.metadata.namespace }}
+                    labels:
+                      mediaconnect.aws.livewyer.io/flow: {{ $id }}
+                  spec:
+                    type: ExternalName
+                    externalName: {{ dig "Source" "IngestIp" "" (fromJson (default "{}" $awscc.status.atProvider.properties)) }}
+                    ports:
+                      - name: tcp
+                        port: {{ dig "Source" "IngestPort" "" (fromJson (default "{}" $awscc.status.atProvider.properties)) }}
+                        protocol: TCP
+                        targetPort: {{ dig "Source" "IngestPort" "" (fromJson (default "{}" $awscc.status.atProvider.properties)) }}
+                      - name: udp
+                        port: {{ dig "Source" "IngestPort" "" (fromJson (default "{}" $awscc.status.atProvider.properties)) }}
+                        protocol: UDP
+                        targetPort: {{ dig "Source" "IngestPort" "" (fromJson (default "{}" $awscc.status.atProvider.properties)) }}
+                  {{ end }}
 
     - step: automatically-detect-ready-composed-resources
       functionRef:
