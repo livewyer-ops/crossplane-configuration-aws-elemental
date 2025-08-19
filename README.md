@@ -6,9 +6,20 @@ A comprehensive Crossplane Configuration package that provides Composite Resourc
 
 This configuration package enables you to provision and manage AWS Elemental media services infrastructure using Kubernetes-native APIs through Crossplane. It provides high-level abstractions for complex media workflows while maintaining the flexibility and power of AWS Elemental services.
 
+## 🚀 What's New
+
+### v2.0.0 - Crossplane v2 Support
+
+- **Crossplane v2 Compatible**: Full compatibility with Crossplane v2.0.2+
+- **Namespace Support**: Added namespace support for Crossplane v2 Managed Resources
+- **Media
+  Connect Service Endpoints**: MediaConnect flows now export endpoints as Kubernetes services for easier integration
+- **Updated Dependencies**: All AWS providers upgraded to v2 for improved stability and features
+- **Enhanced Schema**: XR definitions updated to match Crossplane v2 schema requirements
+
 ## Supported AWS Elemental Services
 
-- **AWS Elemental MediaConnect** - Secure, reliable live video transport
+- **AWS Elemental MediaConnect** - Secure, reliable live video transport with Kubernetes service endpoint exports
 - **AWS Elemental MediaConvert** - File-based video transcoding service
 - **AWS Elemental MediaLive** - Live video processing service
 - **AWS Elemental MediaPackage** - Video origination and packaging service
@@ -22,6 +33,7 @@ This configuration package enables you to provision and manage AWS Elemental med
 - **Workflow Templates**: Reusable workflow templates for common media processing patterns
 - **Multi-Service Integration**: Seamless integration between different AWS Elemental services
 - **Kubernetes Native**: Manage media infrastructure using familiar Kubernetes tooling
+- **Service Discovery**: MediaConnect flows automatically expose endpoints as Kubernetes services
 - **GitOps Ready**: Version control and automate media infrastructure deployments
 - **Composition Functions**: Advanced resource composition using Go templating and auto-ready functions
 
@@ -30,7 +42,7 @@ This configuration package enables you to provision and manage AWS Elemental med
 ### MediaConnect Resources
 
 - **Bridge** - Connect cloud and on-premises video workflows
-- **Flow** - Transport live video content over IP networks
+- **Flow** - Transport live video content over IP networks with automatic Kubernetes service endpoint creation
 - **Gateway** - Connect on-premises equipment to MediaConnect flows
 
 ### MediaConvert Resources
@@ -62,22 +74,23 @@ This configuration package enables you to provision and manage AWS Elemental med
 Before using this configuration, ensure you have:
 
 1. **Kubernetes Cluster** (v1.20+)
-2. **Crossplane** (v1.20.0+) installed in your cluster
+2. **Crossplane** (v2.0.2+) installed in your cluster
 3. **AWS Account** with appropriate permissions for Elemental services
 4. **AWS CLI** configured (for initial setup)
 
 ## Installation
 
-### 1. Install Crossplane
+### 1. Install Crossplane v2
 
-If you haven't already installed Crossplane:
+If you haven't already installed Crossplane v2:
 
 ```bash
 helm repo add crossplane-stable https://charts.crossplane.io/stable
 helm repo update
 helm install crossplane crossplane-stable/crossplane \
   --namespace crossplane-system \
-  --create-namespace
+  --create-namespace \
+  --version ">=1.17.0"
 ```
 
 ### 2. Install Required Providers and Functions
@@ -100,7 +113,7 @@ kind: Configuration
 metadata:
   name: configuration-aws-elemental
 spec:
-  package: xpkg.upbound.io/livewyer-ops/configuration-aws-elemental:latest
+  package: xpkg.upbound.io/livewyer-ops/configuration-aws-elemental:v2.0.0
 EOF
 ```
 
@@ -242,8 +255,10 @@ apiVersion: medialive.aws.livewyer.io/v1alpha1
 kind: Network
 metadata:
   name: my-media-network
+  namespace: media-services # Namespace support in v2
 spec:
   providerConfigRef:
+    kind: ProviderConfig
     name: aws
   forProvider:
     region: us-east-1
@@ -251,22 +266,47 @@ spec:
       - Cidr: 192.168.1.0/24
 ```
 
-### MediaConnect Flow
+### MediaConnect Flow with Service Endpoint Export
 
 ```yaml
 apiVersion: mediaconnect.aws.livewyer.io/v1alpha1
 kind: Flow
 metadata:
   name: my-media-flow
+  namespace: media-services
+  labels:
+    mediaconnect.aws.livewyer.io/flow: my-media-flow
 spec:
   providerConfigRef:
+    kind: ProviderConfig
     name: aws
   forProvider:
     region: us-east-1
+    flowSize: MEDIUM
     source:
       Name: my-source
       Protocol: zixi-push
       IngestPort: 2088
+      WhitelistCidr: 0.0.0.0/0
+    sourceMonitoringConfig:
+      ThumbnailState: ENABLED
+```
+
+The MediaConnect Flow will automatically create a Kubernetes Service endpoint that can be referenced by other resources:
+
+```yaml
+# Automatically created service
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-media-flow-endpoint
+  namespace: media-services
+spec:
+  type: ExternalName
+  externalName: <flow-ingest-ip>.mediaconnect.us-east-1.amazonaws.com
+  ports:
+    - port: 2088
+      protocol: UDP
 ```
 
 ### Event-Driven Workflow
@@ -276,8 +316,10 @@ apiVersion: elemental.aws.livewyer.io/v1alpha1
 kind: Event
 metadata:
   name: live-streaming-event
+  namespace: media-services
 spec:
   providerConfigRef:
+    kind: ProviderConfig
     name: aws
   forProvider:
     region: us-east-1
@@ -295,6 +337,7 @@ apiVersion: elemental.aws.livewyer.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
   name: standard-live-workflow
+  namespace: media-services
 spec:
   steps:
     - name: setup-network
@@ -335,7 +378,7 @@ See the complete workflow examples in the [`examples/`](examples/) directory:
 │   ├── event/              # Event-driven workflow XRDs
 │   ├── mediaconnect/       # MediaConnect XRDs
 │   │   ├── bridge/         # Bridge resource
-│   │   ├── flow/           # Flow resource
+│   │   ├── flow/           # Flow resource with service export
 │   │   └── gateway/        # Gateway resource
 │   ├── mediaconvert/       # MediaConvert XRDs
 │   │   └── jobtemplate/    # JobTemplate resource
@@ -361,21 +404,37 @@ See the complete workflow examples in the [`examples/`](examples/) directory:
 
 This configuration automatically installs the following dependencies:
 
-### Providers
+### Providers (v2)
 
-- `xpkg.upbound.io/upbound/provider-family-aws` (>=v1)
-- `xpkg.upbound.io/upbound/provider-aws-cloudcontrol` (>=v1)
-- `xpkg.upbound.io/upbound/provider-aws-medialive` (>=v1)
-- `xpkg.upbound.io/upbound/provider-aws-mediapackage` (>=v1)
-- `xpkg.upbound.io/upbound/provider-aws-mediastore` (>=v1)
-- `xpkg.upbound.io/upbound/provider-aws-cloudformation` (>=v1)
-- `xpkg.upbound.io/crossplane-contrib/provider-nop` (>=v0.4.0)
-- `xpkg.upbound.io/upbound/provider-kubernetes` (>=v0)
+- `xpkg.upbound.io/upbound/provider-family-aws` (>=v2)
+- `xpkg.upbound.io/upbound/provider-aws-cloudcontrol` (>=v2)
+- `xpkg.upbound.io/upbound/provider-aws-medialive` (>=v2)
+- `xpkg.upbound.io/upbound/provider-aws-mediapackage` (>=v2)
+- `xpkg.upbound.io/upbound/provider-aws-mediastore` (>=v2)
+- `xpkg.upbound.io/upbound/provider-aws-cloudformation` (>=v2)
+- `xpkg.upbound.io/upbound/provider-kubernetes` (>=v1)
 
 ### Functions
 
 - `xpkg.upbound.io/upbound/function-go-templating` (>=v0.10.0)
 - `xpkg.upbound.io/upbound/function-auto-ready` (>=v0.5.0)
+
+## Migration from v1 to v2
+
+If you're upgrading from a previous version:
+
+1. **Update Crossplane**: Ensure you're running Crossplane v2.0.2 or later
+2. **Update Provider Versions**: All AWS providers need to be upgraded to v2
+3. **Namespace Support**: Resources can now be deployed in any namespace (not just default)
+4. **Service Endpoints**: MediaConnect flows automatically create Kubernetes service endpoints
+5. **Schema Updates**: Some resource definitions have been updated to match Crossplane v2 schema
+
+### Breaking Changes
+
+- Minimum Crossplane version is now v2.0.2
+- All AWS providers require v2 versions
+- Removed dependency on `provider-nop`
+- XRD schemas updated for Crossplane v2 compatibility
 
 ## Documentation
 
@@ -384,7 +443,7 @@ Comprehensive documentation is available in the [`docs/`](docs/) directory:
 - [AWS Elemental Resources Overview](docs/README.md)
 - [MediaConnect Resources](docs/)
   - [Bridge](docs/mediaconnect-bridge.md)
-  - [Flow](docs/mediaconnect-flow.md)
+  - [Flow with Service Endpoints](docs/mediaconnect-flow.md)
   - [Gateway](docs/mediaconnect-gateway.md)
 - [MediaConvert Resources](docs/)
   - [JobTemplate](docs/mediaconvert-jobtemplate.md)
@@ -419,6 +478,9 @@ Comprehensive documentation is available in the [`docs/`](docs/) directory:
 
 5. **Template parameters**: Ensure all required parameters are provided when using workflow templates
 
+6. **Service endpoint not created**: Check that the
+   MediaConnect flow has the correct labels
+
 ### Debugging
 
 Enable debug logging for providers:
@@ -430,14 +492,20 @@ kubectl patch deployment crossplane -n crossplane-system -p '{"spec":{"template"
 Check resource status:
 
 ```bash
-kubectl describe <resource-type> <resource-name>
+kubectl describe <resource-type> <resource-name> -n <namespace>
 ```
 
 Check workflow execution:
 
 ```bash
-kubectl get events --sort-by='.metadata.creationTimestamp'
+kubectl get events --sort-by='.metadata.creationTimestamp' -n <namespace>
 kubectl logs -n crossplane-system deployment/crossplane
+```
+
+Check MediaConnect service endpoints:
+
+```bash
+kubectl get services -n <namespace> -l mediaconnect.aws.livewyer.io/flow
 ```
 
 ## Use Cases
@@ -447,6 +515,7 @@ kubectl logs -n crossplane-system deployment/crossplane
 - Event-driven live streaming setup with automatic resource provisioning
 - Multi-camera live events with failover capabilities
 - 24/7 live channels with monitoring and alerting
+- Kubernetes-native service discovery for MediaConnect endpoints
 
 ### Video Processing Pipelines
 
@@ -478,11 +547,12 @@ We welcome contributions! Please see our contributing guidelines and:
 
 ### Development Guidelines
 
-- Follow Crossplane composition best practices
+- Follow Crossplane v2 composition best practices
 - Include comprehensive examples for new resources
 - Update documentation for any new features
 - Test with multiple AWS regions where applicable
 - Ensure proper error handling and status reporting
+- Maintain backward compatibility where possible
 
 ## Support
 
@@ -501,16 +571,19 @@ For support and questions:
 - **Enhanced Monitoring**: Built-in CloudWatch integration and alerting
 - **Cost Optimization**: Automated cost optimization recommendations
 - **Multi-Region**: Enhanced multi-region deployment capabilities
+- **Service Mesh Integration**: Native integration with Istio/Linkerd for MediaConnect endpoints
 
 ### Current Status
 
-- ✅ MediaConnect (Bridge, Flow, Gateway)
+- ✅ MediaConnect (Bridge, Flow with Service Endpoints, Gateway)
 - ✅ MediaConvert (JobTemplate)
 - ✅ MediaLive (MultiplexProgram, Network)
 - ✅ MediaPackage (OriginEndpoint)
 - ✅ MediaPackage V2 (Channel, ChannelGroup)
 - ✅ Event-driven workflows
 - ✅ Workflow templates
+- ✅ Crossplane v2 support
+- ✅ Namespace support
 - 🚧 MediaStore (in development)
 - 🚧 MediaTailor (in development)
 
@@ -527,6 +600,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
+**Version**: v2.0.0
 **Maintained by**: [Livewyer](https://livewyer.com)
 **Source**: [github.com/livewyer-ops/crossplane-configuration-aws-elemental](https://github.com/livewyer-ops/crossplane-configuration-aws-elemental)
 **Package**: [xpkg.upbound.io/livewyer-ops/configuration-aws-elemental](https://marketplace.upbound.io/configurations/livewyer-ops/configuration-aws-elemental)

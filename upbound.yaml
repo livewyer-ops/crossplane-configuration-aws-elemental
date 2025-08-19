@@ -27,7 +27,7 @@ spec:
   maintainer: Livewyer <bowen@livewyer.com>
   repository: xpkg.upbound.io/livewyer-ops/configuration-aws-elemental
   source: github.com/livewyer-ops/configuration-aws-elemental
-  readme: |-
+  readme: |
     # Crossplane Configuration for AWS Elemental
 
     A comprehensive Crossplane Configuration package that provides Composite Resource Definitions (XRDs) for AWS Elemental media services on Kubernetes.
@@ -36,45 +36,91 @@ spec:
 
     This configuration package enables you to provision and manage AWS Elemental media services infrastructure using Kubernetes-native APIs through Crossplane. It provides high-level abstractions for complex media workflows while maintaining the flexibility and power of AWS Elemental services.
 
+    ## 🚀 What's New
+
+    ### v2.0.0 - Crossplane v2 Support
+
+    - **Crossplane v2 Compatible**: Full compatibility with Crossplane v2.0.2+
+    - **Namespace Support**: Added namespace support for Crossplane v2 Managed Resources
+    - **Media
+      Connect Service Endpoints**: MediaConnect flows now export endpoints as Kubernetes services for easier integration
+    - **Updated Dependencies**: All AWS providers upgraded to v2 for improved stability and features
+    - **Enhanced Schema**: XR definitions updated to match Crossplane v2 schema requirements
+
     ## Supported AWS Elemental Services
 
-    - **AWS Elemental MediaConnect** - Secure, reliable live video transport
+    - **AWS Elemental MediaConnect** - Secure, reliable live video transport with Kubernetes service endpoint exports
     - **AWS Elemental MediaConvert** - File-based video transcoding service
     - **AWS Elemental MediaLive** - Live video processing service
     - **AWS Elemental MediaPackage** - Video origination and packaging service
     - **AWS Elemental MediaPackage V2** - Next-generation video packaging
-    - **AWS Elemental MediaStore** - Storage service optimized for media
-    - **AWS Elemental MediaTailor** - Video personalization and monetization
+    - **AWS Elemental MediaStore** - Storage service optimized for media (planned)
+    - **AWS Elemental MediaTailor** - Video personalization and monetization (planned)
 
     ## Features
 
-    - **Workflow Orchestration**: Define complex media workflows with dependencies and sequencing
+    - **Event-Driven Workflows**: Define event-driven media workflows with template-based orchestration
+    - **Workflow Templates**: Reusable workflow templates for common media processing patterns
     - **Multi-Service Integration**: Seamless integration between different AWS Elemental services
     - **Kubernetes Native**: Manage media infrastructure using familiar Kubernetes tooling
+    - **Service Discovery**: MediaConnect flows automatically expose endpoints as Kubernetes services
     - **GitOps Ready**: Version control and automate media infrastructure deployments
-    - **Composition Functions**: Advanced resource composition using Go templating and transformation functions
+    - **Composition Functions**: Advanced resource composition using Go templating and auto-ready functions
+
+    ## Available Resources
+
+    ### MediaConnect Resources
+
+    - **Bridge** - Connect cloud and on-premises video workflows
+    - **Flow** - Transport live video content over IP networks with automatic Kubernetes service endpoint creation
+    - **Gateway** - Connect on-premises equipment to MediaConnect flows
+
+    ### MediaConvert Resources
+
+    - **JobTemplate** - Standardize video transcoding workflows
+
+    ### MediaLive Resources
+
+    - **MultiplexProgram** - Combine multiple video streams into transport streams
+    - **Network** - Manage IP address pools and routing configurations
+
+    ### MediaPackage Resources
+
+    - **OriginEndpoint** - Package and deliver live video content
+
+    ### MediaPackage V2 Resources
+
+    - **Channel** - Ingest and process live video content with enhanced features
+    - **ChannelGroup** - Organize and manage collections of related channels
+
+    ### Workflow Orchestration
+
+    - **Event** - Event-driven workflow execution with template-based configuration
+    - **WorkflowTemplate** - Reusable workflow templates with parameterization
+    - **Workflow** - Complex multi-step workflows with resource dependencies
 
     ## Prerequisites
 
     Before using this configuration, ensure you have:
 
     1. **Kubernetes Cluster** (v1.20+)
-    2. **Crossplane** (v1.20.0+) installed in your cluster
+    2. **Crossplane** (v2.0.2+) installed in your cluster
     3. **AWS Account** with appropriate permissions for Elemental services
     4. **AWS CLI** configured (for initial setup)
 
     ## Installation
 
-    ### 1. Install Crossplane
+    ### 1. Install Crossplane v2
 
-    If you haven't already installed Crossplane:
+    If you haven't already installed Crossplane v2:
 
     ```bash
     helm repo add crossplane-stable https://charts.crossplane.io/stable
     helm repo update
     helm install crossplane crossplane-stable/crossplane \
       --namespace crossplane-system \
-      --create-namespace
+      --create-namespace \
+      --version ">=1.17.0"
     ```
 
     ### 2. Install Required Providers and Functions
@@ -84,14 +130,8 @@ spec:
     ```bash
     # Apply the functions
     kubectl apply -f examples/functions.yaml
-
-    # The following providers will be installed automatically:
-    # - xpkg.upbound.io/upbound/provider-family-aws
-    # - xpkg.upbound.io/upbound/provider-aws-cloudcontrol
-    # - xpkg.upbound.io/upbound/provider-aws-medialive
-    # - xpkg.upbound.io/upbound/provider-aws-mediapackage
-    # - xpkg.upbound.io/upbound/provider-aws-mediastore
-    # - xpkg.upbound.io/upbound/provider-aws-cloudformation
+    # Apply the providers
+    kubectl apply -f examples/providers.yaml
     ```
 
     ### 3. Install the Configuration
@@ -103,7 +143,7 @@ spec:
     metadata:
       name: configuration-aws-elemental
     spec:
-      package: xpkg.upbound.io/livewyer-ops/configuration-aws-elemental:latest
+      package: xpkg.upbound.io/livewyer-ops/configuration-aws-elemental:v2.0.0
     EOF
     ```
 
@@ -115,6 +155,29 @@ spec:
 
     ## Environment Setup
 
+    ### Kubernetes ProviderConfig Setup
+
+    #### 1. If provider kubernetes running in the cluster
+
+    ```bash
+    SA=$(kubectl -n crossplane-system get sa -o name | grep provider-kubernetes | sed -e 's|serviceaccount\/|crossplane-system:|g')
+    kubectl create clusterrolebinding provider-kubernetes-admin-binding --clusterrole cluster-admin --serviceaccount="${SA}"
+    ```
+
+    #### 2. Apply ProviderConfig
+
+    ```bash
+    kubectl apply -f - <<EOF
+    apiVersion: kubernetes.crossplane.io/v1alpha1
+    kind: ProviderConfig
+    metadata:
+      name: kubernetes-provider
+    spec:
+      credentials:
+        source: InjectedIdentity
+    EOF
+    ```
+
     ### AWS ProviderConfig Setup
 
     Create AWS credentials and configure the provider:
@@ -122,7 +185,6 @@ spec:
     #### Option 1: Using AWS Access Keys
 
     1. Create an AWS IAM user with the following managed policies:
-      - `AmazonElasticTranscoder_FullAccess`
       - `AWSElementalMediaConvertFullAccess`
       - `AWSElementalMediaLiveFullAccess`
       - `AWSElementalMediaPackageFullAccess`
@@ -132,8 +194,8 @@ spec:
     2. Create a Kubernetes Secret with AWS credentials:
 
     ```bash
-    kubectl create secret generic aws-secret -n crossplane-system \
-      --from-literal=creds='[default]
+    kubectl create secret generic provider-aws -n crossplane-system \
+      --from-literal=credentials='[default]
     aws_access_key_id = YOUR_ACCESS_KEY_ID
     aws_secret_access_key = YOUR_SECRET_ACCESS_KEY'
     ```
@@ -151,8 +213,8 @@ spec:
         source: Secret
         secretRef:
           namespace: crossplane-system
-          name: aws-secret
-          key: creds
+          name: provider-aws
+          key: credentials
     EOF
     ```
 
@@ -223,8 +285,10 @@ spec:
     kind: Network
     metadata:
       name: my-media-network
+      namespace: media-services # Namespace support in v2
     spec:
       providerConfigRef:
+        kind: ProviderConfig
         name: aws
       forProvider:
         region: us-east-1
@@ -232,42 +296,135 @@ spec:
           - Cidr: 192.168.1.0/24
     ```
 
-    ### MediaConnect Flow
+    ### MediaConnect Flow with Service Endpoint Export
 
     ```yaml
     apiVersion: mediaconnect.aws.livewyer.io/v1alpha1
     kind: Flow
     metadata:
       name: my-media-flow
+      namespace: media-services
+      labels:
+        mediaconnect.aws.livewyer.io/flow: my-media-flow
     spec:
       providerConfigRef:
+        kind: ProviderConfig
         name: aws
       forProvider:
         region: us-east-1
-        flowSize: 1000
+        flowSize: MEDIUM
+        source:
+          Name: my-source
+          Protocol: zixi-push
+          IngestPort: 2088
+          WhitelistCidr: 0.0.0.0/0
+        sourceMonitoringConfig:
+          ThumbnailState: ENABLED
     ```
 
-    ### Complex Workflow
+    The MediaConnect Flow will automatically create a Kubernetes Service endpoint that can be referenced by other resources:
 
-    See the complete workflow example at [`examples/workflow.yaml`](examples/workflow.yaml) which demonstrates:
+    ```yaml
+    # Automatically created service
+    apiVersion: v1
+    kind: Service
+    metadata:
+      name: my-media-flow-endpoint
+      namespace: media-services
+    spec:
+      type: ExternalName
+      externalName: <flow-ingest-ip>.mediaconnect.us-east-1.amazonaws.com
+      ports:
+        - port: 2088
+          protocol: UDP
+    ```
 
-    - MediaConnect bridge and flow setup
-    - MediaLive input security groups and inputs
-    - MediaLive multiplex and channels
-    - MediaPackage channel and origin endpoint integration
+    ### Event-Driven Workflow
+
+    ```yaml
+    apiVersion: elemental.aws.livewyer.io/v1alpha1
+    kind: Event
+    metadata:
+      name: live-streaming-event
+      namespace: media-services
+    spec:
+      providerConfigRef:
+        kind: ProviderConfig
+        name: aws
+      forProvider:
+        region: us-east-1
+      workflowTemplate:
+        id: workflow-usecase-1
+        parameters:
+          network: 192.168.1.0/24
+          iamRole: arn:aws:iam::123456789012:role/MediaLiveAccessRole
+    ```
+
+    ### Workflow Template
+
+    ```yaml
+    apiVersion: elemental.aws.livewyer.io/v1alpha1
+    kind: WorkflowTemplate
+    metadata:
+      name: standard-live-workflow
+      namespace: media-services
+    spec:
+      steps:
+        - name: setup-network
+          resources:
+            - name: media-network
+              spec:
+                apiVersion: medialive.aws.livewyer.io/v1alpha1
+                kind: Network
+                spec:
+                  forProvider:
+                    ipPools:
+                      - Cidr: "{{ network }}"
+        - name: create-packaging
+          resources:
+            - name: package-channel
+              spec:
+                apiVersion: mediapackagev2.aws.livewyer.io/v1alpha1
+                kind: ChannelGroup
+                spec:
+                  forProvider:
+                    channelGroupName: live-content
+                    description: "Live streaming content group"
+    ```
+
+    ## Complex Workflow Examples
+
+    See the complete workflow examples in the [`examples/`](examples/) directory:
+
+    - [`workflow.yaml`](examples/workflow.yaml) - Multi-step workflow with dependencies
+    - [`workflow-template.yaml`](examples/workflow-template.yaml) - Reusable workflow template
+    - [`event.yaml`](examples/event.yaml) - Event-driven workflow execution
+    - Individual service examples in respective subdirectories
 
     ## Configuration Structure
 
     ```
     ├── apis/                    # Composite Resource Definitions
+    │   ├── event/              # Event-driven workflow XRDs
     │   ├── mediaconnect/       # MediaConnect XRDs
+    │   │   ├── bridge/         # Bridge resource
+    │   │   ├── flow/           # Flow resource with service export
+    │   │   └── gateway/        # Gateway resource
     │   ├── mediaconvert/       # MediaConvert XRDs
+    │   │   └── jobtemplate/    # JobTemplate resource
     │   ├── medialive/          # MediaLive XRDs
+    │   │   ├── multiplexprogram/ # MultiplexProgram resource
+    │   │   └── network/        # Network resource
     │   ├── mediapackage/       # MediaPackage XRDs
+    │   │   └── originendpoint/ # OriginEndpoint resource
     │   ├── mediapackagev2/     # MediaPackage V2 XRDs
-    │   ├── mediastore/         # MediaStore XRDs
-    │   ├── mediatailor/        # MediaTailor XRDs
-    │   └── workflow/           # Workflow orchestration XRDs
+    │   │   ├── channel/        # Channel resource
+    │   │   └── channelgroup/   # ChannelGroup resource
+    │   ├── mediastore/         # MediaStore XRDs (planned)
+    │   ├── mediatailor/        # MediaTailor XRDs (planned)
+    │   ├── workflow/           # Workflow orchestration XRDs
+    │   └── workflowtemplate/   # WorkflowTemplate XRDs
+    ├── docs/                   # Documentation
     ├── examples/               # Usage examples
     ├── functions/              # Composition functions
     └── tests/                  # Test configurations
@@ -277,22 +434,61 @@ spec:
 
     This configuration automatically installs the following dependencies:
 
-    ### Providers
+    ### Providers (v2)
 
-    - `xpkg.upbound.io/upbound/provider-family-aws` (>=v1)
-    - `xpkg.upbound.io/upbound/provider-aws-cloudcontrol` (>=v1)
-    - `xpkg.upbound.io/upbound/provider-aws-medialive` (>=v1)
-    - `xpkg.upbound.io/upbound/provider-aws-mediapackage` (>=v1)
-    - `xpkg.upbound.io/upbound/provider-aws-mediastore` (>=v1)
-    - `xpkg.upbound.io/upbound/provider-aws-cloudformation` (>=v1)
+    - `xpkg.upbound.io/upbound/provider-family-aws` (>=v2)
+    - `xpkg.upbound.io/upbound/provider-aws-cloudcontrol` (>=v2)
+    - `xpkg.upbound.io/upbound/provider-aws-medialive` (>=v2)
+    - `xpkg.upbound.io/upbound/provider-aws-mediapackage` (>=v2)
+    - `xpkg.upbound.io/upbound/provider-aws-mediastore` (>=v2)
+    - `xpkg.upbound.io/upbound/provider-aws-cloudformation` (>=v2)
+    - `xpkg.upbound.io/upbound/provider-kubernetes` (>=v1)
 
     ### Functions
 
-    - `xpkg.upbound.io/upbound/function-patch-and-transform` (>=v0.9.0)
     - `xpkg.upbound.io/upbound/function-go-templating` (>=v0.10.0)
     - `xpkg.upbound.io/upbound/function-auto-ready` (>=v0.5.0)
-    - `xpkg.upbound.io/crossplane-contrib/function-status-transformer` (>=v0.4.1)
-    - `xpkg.upbound.io/crossplane-contrib/function-sequencer` (>=v0.2.3)
+
+    ## Migration from v1 to v2
+
+    If you're upgrading from a previous version:
+
+    1. **Update Crossplane**: Ensure you're running Crossplane v2.0.2 or later
+    2. **Update Provider Versions**: All AWS providers need to be upgraded to v2
+    3. **Namespace Support**: Resources can now be deployed in any namespace (not just default)
+    4. **Service Endpoints**: MediaConnect flows automatically create Kubernetes service endpoints
+    5. **Schema Updates**: Some resource definitions have been updated to match Crossplane v2 schema
+
+    ### Breaking Changes
+
+    - Minimum Crossplane version is now v2.0.2
+    - All AWS providers require v2 versions
+    - Removed dependency on `provider-nop`
+    - XRD schemas updated for Crossplane v2 compatibility
+
+    ## Documentation
+
+    Comprehensive documentation is available in the [`docs/`](docs/) directory:
+
+    - [AWS Elemental Resources Overview](docs/README.md)
+    - [MediaConnect Resources](docs/)
+      - [Bridge](docs/mediaconnect-bridge.md)
+      - [Flow with Service Endpoints](docs/mediaconnect-flow.md)
+      - [Gateway](docs/mediaconnect-gateway.md)
+    - [MediaConvert Resources](docs/)
+      - [JobTemplate](docs/mediaconvert-jobtemplate.md)
+    - [MediaLive Resources](docs/)
+      - [MultiplexProgram](docs/medialive-multiplexprogram.md)
+      - [Network](docs/medialive-network.md)
+    - [MediaPackage Resources](docs/)
+      - [OriginEndpoint](docs/mediapackage-originendpoint.md)
+    - [MediaPackage V2 Resources](docs/)
+      - [Channel](docs/mediapackagev2-channel.md)
+      - [ChannelGroup](docs/mediapackagev2-channelgroup.md)
+    - [Workflow Orchestration](docs/)
+      - [Event](docs/event.md)
+      - [WorkflowTemplate](docs/workflowtemplate.md)
+      - [Workflow](docs/workflow.md)
 
     ## Troubleshooting
 
@@ -310,6 +506,11 @@ spec:
 
     4. **Resource dependencies**: Check that dependent resources are created in the correct order
 
+    5. **Template parameters**: Ensure all required parameters are provided when using workflow templates
+
+    6. **Service endpoint not created**: Check that the
+      MediaConnect flow has the correct labels
+
     ### Debugging
 
     Enable debug logging for providers:
@@ -321,8 +522,48 @@ spec:
     Check resource status:
 
     ```bash
-    kubectl describe <resource-type> <resource-name>
+    kubectl describe <resource-type> <resource-name> -n <namespace>
     ```
+
+    Check workflow execution:
+
+    ```bash
+    kubectl get events --sort-by='.metadata.creationTimestamp' -n <namespace>
+    kubectl logs -n crossplane-system deployment/crossplane
+    ```
+
+    Check MediaConnect service endpoints:
+
+    ```bash
+    kubectl get services -n <namespace> -l mediaconnect.aws.livewyer.io/flow
+    ```
+
+    ## Use Cases
+
+    ### Live Streaming Workflows
+
+    - Event-driven live streaming setup with automatic resource provisioning
+    - Multi-camera live events with failover capabilities
+    - 24/7 live channels with monitoring and alerting
+    - Kubernetes-native service discovery for MediaConnect endpoints
+
+    ### Video Processing Pipelines
+
+    - File-based transcoding workflows for VOD content
+    - Live transcoding and packaging for ABR streaming
+    - Content preparation for multiple distribution platforms
+
+    ### Broadcast Infrastructure
+
+    - Traditional broadcast-to-IP workflows
+    - Cloud-based master control and playout
+    - Disaster recovery and backup streaming
+
+    ### Media Supply Chain
+
+    - Content acquisition and preparation workflows
+    - Quality control and compliance checking
+    - Multi-region content distribution
 
     ## Contributing
 
@@ -331,15 +572,50 @@ spec:
     1. Fork the repository
     2. Create a feature branch
     3. Make your changes
-    4. Add/update tests
+    4. Add/update tests and documentation
     5. Submit a pull request
+
+    ### Development Guidelines
+
+    - Follow Crossplane v2 composition best practices
+    - Include comprehensive examples for new resources
+    - Update documentation for any new features
+    - Test with multiple AWS regions where applicable
+    - Ensure proper error handling and status reporting
+    - Maintain backward compatibility where possible
 
     ## Support
 
     For support and questions:
 
     - Create an issue in this repository
+    - Review existing documentation and examples
     - Contact: bowen@livewyer.com
+
+    ## Roadmap
+
+    ### Planned Features
+
+    - **MediaStore Resources**: Complete implementation of MediaStore containers and policies
+    - **MediaTailor Resources**: Ad insertion and personalization workflows
+    - **Enhanced Monitoring**: Built-in CloudWatch integration and alerting
+    - **Cost Optimization**: Automated cost optimization recommendations
+    - **Multi-Region**: Enhanced multi-region deployment capabilities
+    - **Service Mesh Integration**: Native integration with Istio/Linkerd for MediaConnect endpoints
+
+    ### Current Status
+
+    - ✅ MediaConnect (Bridge, Flow with Service Endpoints, Gateway)
+    - ✅ MediaConvert (JobTemplate)
+    - ✅ MediaLive (MultiplexProgram, Network)
+    - ✅ MediaPackage (OriginEndpoint)
+    - ✅ MediaPackage V2 (Channel, ChannelGroup)
+    - ✅ Event-driven workflows
+    - ✅ Workflow templates
+    - ✅ Crossplane v2 support
+    - ✅ Namespace support
+    - 🚧 MediaStore (in development)
+    - 🚧 MediaTailor (in development)
 
     ## License
 
@@ -350,8 +626,11 @@ spec:
     - [Crossplane](https://crossplane.io/) for the amazing cloud-native control plane
     - [Upbound](https://upbound.io/) for the AWS provider ecosystem
     - AWS Elemental team for the comprehensive media services
+    - The open-source community for contributions and feedback
 
     ---
 
+    **Version**: v2.0.0
     **Maintained by**: [Livewyer](https://livewyer.com)
     **Source**: [github.com/livewyer-ops/crossplane-configuration-aws-elemental](https://github.com/livewyer-ops/crossplane-configuration-aws-elemental)
+    **Package**: [xpkg.upbound.io/livewyer-ops/configuration-aws-elemental](https://marketplace.upbound.io/configurations/livewyer-ops/configuration-aws-elemental)
