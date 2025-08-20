@@ -26,6 +26,8 @@ spec:
                   IngestPort: 3000
                   Protocol: rtp
                   MaxBitrate: 100000
+                sourceMonitoringConfig:
+                  ThumbnailState: ENABLED
         - name: mediaconnect-flow-b
           spec:
             apiVersion: mediaconnect.aws.livewyer.io/v1alpha1
@@ -39,6 +41,8 @@ spec:
                   IngestPort: 4000
                   Protocol: rtp
                   MaxBitrate: 100000
+                sourceMonitoringConfig:
+                  ThumbnailState: ENABLED
 
     - name: medialive-network
       resources:
