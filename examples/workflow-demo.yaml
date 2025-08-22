@@ -198,7 +198,7 @@ spec:
                   transportStreamBitrate: 1000000
                   transportStreamId: 1
                   maximumVideoBufferDelayMilliseconds: 800
-                startMultiplex: true
+                startMultiplex: false
         - name: medialive-multiplex-b
           dependsOn:
             - key: availabilityZones
@@ -225,7 +225,7 @@ spec:
                   transportStreamBitrate: 1000000
                   transportStreamId: 1
                   maximumVideoBufferDelayMilliseconds: 800
-                startMultiplex: true
+                startMultiplex: false
 
     - name: medialive-multiplex-program
       resources:
@@ -305,6 +305,7 @@ spec:
               forProvider:
                 name: medialive-channel-a
                 channelClass: STANDARD
+                startChannel: false
                 roleArn: arn:aws:iam::123456789012:role/MediaLiveAccessRole
                 inputSpecification:
                   codec: AVC
@@ -387,6 +388,7 @@ spec:
               forProvider:
                 name: medialive-channel-b
                 channelClass: STANDARD
+                startChannel: false
                 roleArn: arn:aws:iam::123456789012:role/MediaLiveAccessRole
                 inputSpecification:
                   codec: AVC
@@ -446,6 +448,7 @@ spec:
               forProvider:
                 name: medialive-channel-c
                 channelClass: STANDARD
+                startChannel: false
                 roleArn: arn:aws:iam::123456789012:role/MediaLiveAccessRole
                 inputSpecification:
                   codec: AVC
